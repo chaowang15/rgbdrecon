@@ -150,8 +150,10 @@ HRESULT CUDARGBDSensor::process(ID3D11DeviceContext* context)
 	// Process Color
 	////////////////////////////////////////////////////////////////////////////////////
 
-	//Start Timing
-	if (GlobalAppState::get().s_timingsDetailledEnabled) { cutilSafeCall(cudaDeviceSynchronize()); m_timer.start(); }
+	// Start Timing (count time expense, NOT used this time)
+	if (GlobalAppState::get().s_timingsDetailledEnabled) { 
+		cutilSafeCall(cudaDeviceSynchronize()); m_timer.start();
+	}
 
 	if (m_bFilterIntensityValues)	
 		gaussFilterFloat4Map(m_depthCameraData.d_colorData, m_RGBDAdapter->getColorMapResampledFloat4(), m_fBilateralFilterSigmaDIntensity, m_fBilateralFilterSigmaRIntensity, m_RGBDAdapter->getWidth(), m_RGBDAdapter->getHeight());
@@ -159,7 +161,12 @@ HRESULT CUDARGBDSensor::process(ID3D11DeviceContext* context)
 		copyFloat4Map(m_depthCameraData.d_colorData, m_RGBDAdapter->getColorMapResampledFloat4(), m_RGBDAdapter->getWidth(), m_RGBDAdapter->getHeight());
 
 	// Stop Timing
-	if (GlobalAppState::get().s_timingsDetailledEnabled) { cutilSafeCall(cudaDeviceSynchronize()); m_timer.stop(); TimingLog::totalTimeFilterColor += m_timer.getElapsedTimeMS(); TimingLog::countTimeFilterColor++; }
+	if (GlobalAppState::get().s_timingsDetailledEnabled) { 
+		cutilSafeCall(cudaDeviceSynchronize()); 
+		m_timer.stop(); 
+		TimingLog::totalTimeFilterColor += m_timer.getElapsedTimeMS(); 
+		TimingLog::countTimeFilterColor++; 
+	}
 
 	////////////////////////////////////////////////////////////////////////////////////
 	// Process Depth

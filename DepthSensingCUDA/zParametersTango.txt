@@ -1,5 +1,5 @@
 // 0=Kinect; 1=PrimeSense; 2=KinectOne; 3=BinaryDumpReader; 4=NetworkSensor; 5=IntelSensor; 6=RealSense 
-s_sensorIdx = 0;
+s_sensorIdx = 1;
 
 s_windowWidth = 640;		//render window width
 s_windowHeight = 360;		//render window height

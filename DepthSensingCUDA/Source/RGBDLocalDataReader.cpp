@@ -4,14 +4,14 @@
 
 RGBDLocalDataReader::RGBDLocalDataReader()
 {
-	RGBDSensor::init(GlobalCameraPoseOptState::getInstance().s_depthWidth, GlobalCameraPoseOptState::getInstance().s_depthHeight, 
-		GlobalCameraPoseOptState::getInstance().s_colorWidth, GlobalCameraPoseOptState::getInstance().s_colorHeight, 1);
+	RGBDSensor::init(GlobalRGBDReaderState::getInstance().s_depthWidth, GlobalRGBDReaderState::getInstance().s_depthHeight, 
+		GlobalRGBDReaderState::getInstance().s_colorWidth, GlobalRGBDReaderState::getInstance().s_colorHeight, 1);
 
 	// Set intrinsic camera calibration matrix parameters
-	initializeDepthIntrinsics(GlobalCameraPoseOptState::getInstance().s_fx, GlobalCameraPoseOptState::getInstance().s_fy,
-		GlobalCameraPoseOptState::getInstance().s_cx, GlobalCameraPoseOptState::getInstance().s_cy);
-	initializeColorIntrinsics(GlobalCameraPoseOptState::getInstance().s_fx, GlobalCameraPoseOptState::getInstance().s_fy,
-		GlobalCameraPoseOptState::getInstance().s_cx, GlobalCameraPoseOptState::getInstance().s_cy);
+	initializeDepthIntrinsics(GlobalRGBDReaderState::getInstance().s_fx, GlobalRGBDReaderState::getInstance().s_fy,
+		GlobalRGBDReaderState::getInstance().s_cx, GlobalRGBDReaderState::getInstance().s_cy);
+	initializeColorIntrinsics(GlobalRGBDReaderState::getInstance().s_fx, GlobalRGBDReaderState::getInstance().s_fy,
+		GlobalRGBDReaderState::getInstance().s_cx, GlobalRGBDReaderState::getInstance().s_cy);
 
 }
 
@@ -24,14 +24,14 @@ RGBDLocalDataReader::~RGBDLocalDataReader()
 HRESULT RGBDLocalDataReader::createFirstConnected()
 {
 	HRESULT hr = S_OK;
-	std::string filename = GlobalCameraPoseOptState::getInstance().s_strDataPath + GlobalCameraPoseOptState::getInstance().s_strAssociationFile;
+	std::string filename = GlobalRGBDReaderState::getInstance().s_strDataPath + GlobalRGBDReaderState::getInstance().s_strAssociationFile;
 	readRGBDAssociationFile(filename);
-	GlobalCameraPoseOptState::getInstance().s_uCurrentFrameIndex = GlobalCameraPoseOptState::getInstance().s_uMinimumFrameIndex;
+	GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex = GlobalRGBDReaderState::getInstance().s_uMinimumFrameIndex;
 	std::cout << "Reading RGB-D data ... " << std::endl;
 	
-	if (GlobalCameraPoseOptState::getInstance().s_bReadCameraPoseFromFile)
+	if (GlobalRGBDReaderState::getInstance().s_bReadCameraPoseFromFile)
 	{
-		std::string filename = GlobalCameraPoseOptState::getInstance().s_strDataPath + GlobalCameraPoseOptState::getInstance().s_strTrajFile;
+		std::string filename = GlobalRGBDReaderState::getInstance().s_strDataPath + GlobalRGBDReaderState::getInstance().s_strTrajFile;
 		readCameraPoseFromFile(filename);
 	}
 
@@ -43,10 +43,10 @@ HRESULT RGBDLocalDataReader::processDepth()
 	HRESULT hr = S_OK;
 
 	// Read depth frame by frame
-	unsigned int frameIdx = GlobalCameraPoseOptState::getInstance().s_uCurrentFrameIndex;
+	unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex;
 	if (isFrameIdxInRangeOfRGBData(frameIdx))
 	{
-		std::string filename = GlobalCameraPoseOptState::getInstance().s_strDataPath + "depth/";
+		std::string filename = GlobalRGBDReaderState::getInstance().s_strDataPath + "depth/";
 		filename += m_strDepthImgName[frameIdx];
 		filename += ".png";
 		readDepthImgFromRGBData(filename);
@@ -59,10 +59,10 @@ HRESULT RGBDLocalDataReader::processDepth()
 HRESULT RGBDLocalDataReader::processColor()
 {
 	HRESULT hr = S_OK;
-	unsigned int frameIdx = GlobalCameraPoseOptState::getInstance().s_uCurrentFrameIndex;
+	unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex;
 	if (isFrameIdxInRangeOfRGBData(frameIdx))
 	{
-		std::string filename = GlobalCameraPoseOptState::getInstance().s_strDataPath + "rgb/";
+		std::string filename = GlobalRGBDReaderState::getInstance().s_strDataPath + "rgb/";
 		filename += m_strColorImgName[frameIdx];
 		filename += ".png";
 		readColorImgFromRGBData(filename);
@@ -137,7 +137,7 @@ void RGBDLocalDataReader::readCameraPoseFromFile(std::string filename)
 				}
 
 				//cout << "Reading pose from depth stamp " << str << "..." << endl;
-				if (GlobalCameraPoseOptState::getInstance().s_bIsCameraPoseQuaternion)
+				if (GlobalRGBDReaderState::getInstance().s_bIsCameraPoseQuaternion)
 				{
 					float tx, ty, tz, qx, qy, qz, qw;
 					sstr >> tx >> ty >> tz >> qx >> qy >> qz >> qw;
@@ -156,7 +156,7 @@ void RGBDLocalDataReader::readCameraPoseFromFile(std::string filename)
 					// The groundtruth trajectories in the ICL-NUIM RGB-D data are generated with negative fy (-480.0), so
 					// we make a correction for these trajectories to ensure that the direction of the model is consistent with
 					// the scanning order.
-					if (GlobalCameraPoseOptState::getInstance().s_uRGBDataType == 1)
+					if (GlobalRGBDReaderState::getInstance().s_uRGBDataType == 1)
 					{
 						transformation(0, 1) = -transformation(0, 1);
 						transformation(1, 0) = -transformation(1, 0);
@@ -192,7 +192,7 @@ void RGBDLocalDataReader::readCameraPoseFromFile(std::string filename)
 bool RGBDLocalDataReader::readDepthImgFromRGBData(std::string filename)
 {
 	float* depthPtr = getDepthFloat();
-	int scaleFactor = GlobalCameraPoseOptState::getInstance().s_uDepthScaleFactor;
+	int scaleFactor = GlobalRGBDReaderState::getInstance().s_uDepthScaleFactor;
 	cv::Mat I = cv::imread(filename, CV_LOAD_IMAGE_ANYDEPTH);
 	if (I.depth() == CV_16U)
 	{
@@ -208,7 +208,7 @@ bool RGBDLocalDataReader::readDepthImgFromRGBData(std::string filename)
 		}
 
 		int i, j;
-		USHORT* p;
+		USHORT* p; 
 		for (i = 0; i < nRows; ++i)
 		{
 			p = I.ptr<USHORT>(i);

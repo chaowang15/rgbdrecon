@@ -8,7 +8,7 @@
 #include <NuiApi.h>
 #include <NuiSkeleton.h>
 
-#include "GlobalCameraPoseOptState.h"
+#include "GlobalRGBDReaderState.h"
 #include "GlobalAppState.h"
 
 #include "opencv2/core/core.hpp"

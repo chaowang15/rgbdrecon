@@ -29,7 +29,7 @@ CUDASceneRepChunkGrid*		g_chunkGrid = NULL;
 
 RGBDSensor* getRGBDSensor()
 {
-	if (GlobalCameraPoseOptState::getInstance().s_bReadRGBData)
+	if (GlobalRGBDReaderState::getInstance().s_bReadRGBData)
 	{
 		static RGBDLocalDataReader s_kinect;
 		return &s_kinect;
@@ -150,12 +150,12 @@ int main(int argc, char** argv)
 
 		// CHAO: read the camera pose optimization state
 		ParameterFile parameterFileGlobalCameraPoseOpt(fileNameDescGlobalCameraPoseOpt);
-		GlobalCameraPoseOptState::getInstance().readMembers(parameterFileGlobalCameraPoseOpt);
+		GlobalRGBDReaderState::getInstance().readMembers(parameterFileGlobalCameraPoseOpt);
 
-		if (GlobalAppState::get().s_sensorIdx != 0)
-		{
-			GlobalCameraPoseOptState::getInstance().s_bReadRGBData = false;
-		}
+		//if (GlobalAppState::get().s_sensorIdx != 0)
+		//{
+		//	GlobalRGBDReaderState::getInstance().s_bReadRGBData = false;
+		//}
 		
 
 		// Set DXUT callbacks
@@ -503,14 +503,17 @@ void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserC
 			
 		case 'S':
 			// CHAO: save the trajectory into files if relevant flags are set
-			if (GlobalCameraPoseOptState::getInstance().s_bStoreCameraPoseIntoFile && !GlobalCameraPoseOptState::getInstance().s_bReadCameraPoseFromFile)
+			if (GlobalRGBDReaderState::getInstance().s_bStoreCameraPoseIntoFile)
 			{
-				std::string filename = GlobalCameraPoseOptState::getInstance().s_strDataPath + "traj_method" +
-					std::to_string(GlobalCameraPoseOptState::getInstance().s_uCameraPoseEstimationType);
+				std::string filename = GlobalRGBDReaderState::getInstance().s_strDataPath;
+				if (!GlobalRGBDReaderState::getInstance().s_bReadCameraPoseFromFile)
+					filename += "traj_original.txt";
+				else
+					filename += "traj_method" + std::to_string(GlobalRGBDReaderState::getInstance().s_uCameraPoseEstimationType);
 				std::cout << "Saving trajectory into file: " << filename << " ... ";
 				g_RGBDAdapter.storeTrajectoryIntoFile(filename);
 				std::cout << "Done" << std::endl;
-			}	
+			}
 			break;
 		default:
 			break;
@@ -851,9 +854,11 @@ void reconstruction_cameraposeopt()
 	//Util::writeToImage(g_RGBDAdapter.getRawDepthMap(), g_RGBDAdapter.getWidth(), g_RGBDAdapter.getHeight(), "test.png");
 
 	mat4f transformation = mat4f::identity();
-	if (GlobalCameraPoseOptState::getInstance().s_bReadCameraPoseFromFile)
+
+	// Use camera poses read from local file as the initial transformation for each frame
+	if (GlobalRGBDReaderState::getInstance().s_bReadCameraPoseFromFile)
 	{
-		unsigned int frameIdx = GlobalCameraPoseOptState::getInstance().s_uCurrentFrameIndex;
+		unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex;
 		if (g_RGBDAdapter.isFrameIdxInRangeOfRGBData(frameIdx))
 		{
 			transformation = g_RGBDAdapter.getRecordedTrajectory(frameIdx);
@@ -868,7 +873,7 @@ void reconstruction_cameraposeopt()
 	{
 		g_rayCast->render(g_sceneRep->getHashData(), g_sceneRep->getHashParams(), g_CudaDepthSensor.getDepthCameraData(), g_sceneRep->getLastRigidTransform());
 		
-		if (!GlobalCameraPoseOptState::getInstance().s_bReadCameraPoseFromFile)
+		if (GlobalRGBDReaderState::getInstance().s_bRunPoseEstimation)
 		{
 			if (GlobalAppState::get().s_sensorIdx == 4)
 			{
@@ -911,20 +916,17 @@ void reconstruction_cameraposeopt()
 				}
 				else
 				{
-					//unsigned int frameIdx = GlobalCameraPoseOptState::getInstance().s_uCurrentFrameIndex;
+					//unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex;
 					//std::cout << "  Estimating camera pose for frame " << frameIdx << std::endl;
-					switch (GlobalCameraPoseOptState::getInstance().s_uCameraPoseEstimationType)
+					switch (GlobalRGBDReaderState::getInstance().s_uCameraPoseEstimationType)
 					{
 					case 0:
 						transformation = g_cameraTracking->applyCT(
-							g_CudaDepthSensor.getCameraSpacePositionsFloat4(),
-							g_CudaDepthSensor.getNormalMapFloat4(),
-							g_CudaDepthSensor.getColorMapFilteredFloat4(),
+							g_CudaDepthSensor.getCameraSpacePositionsFloat4(), g_CudaDepthSensor.getNormalMapFloat4(), g_CudaDepthSensor.getColorMapFilteredFloat4(),
 							//g_rayCast->getRayCastData().d_depth4Transformed, g_CudaDepthSensor.getNormalMapNoRefinementFloat4(), g_CudaDepthSensor.getColorMapFilteredFloat4(),
-							g_rayCast->getRayCastData().d_depth4,
-							g_rayCast->getRayCastData().d_normals,
-							g_rayCast->getRayCastData().d_colors,
+							g_rayCast->getRayCastData().d_depth4, g_rayCast->getRayCastData().d_normals, g_rayCast->getRayCastData().d_colors,
 							g_sceneRep->getLastRigidTransform(),
+							//transformation,
 							GlobalCameraTrackingState::getInstance().s_maxInnerIter,
 							GlobalCameraTrackingState::getInstance().s_maxOuterIter,
 							GlobalCameraTrackingState::getInstance().s_distThres,
@@ -995,20 +997,23 @@ void reconstruction_cameraposeopt()
 	//if (GlobalAppState::getInstance().s_recordData) {
 	//	g_RGBDAdapter.recordTrajectory(transformation);
 	//}
-	if (!GlobalCameraPoseOptState::getInstance().s_bReadCameraPoseFromFile)
+
+	// Record each current transformation if needed
+	g_RGBDAdapter.recordTrajectory(transformation);
+	//if (!GlobalRGBDReaderState::getInstance().s_bReadCameraPoseFromFile)
+	//{
+	//	g_RGBDAdapter.recordTrajectory(transformation);
+	//}
+	
+	// Update the frame index for the next frame
+	if (GlobalRGBDReaderState::getInstance().s_bReadRGBData)
 	{
-		g_RGBDAdapter.recordTrajectory(transformation);
-	}
-	if (GlobalCameraPoseOptState::getInstance().s_bReadRGBData)
-	{
-		if (g_RGBDAdapter.isFrameIdxInRangeOfRGBData(GlobalCameraPoseOptState::getInstance().s_uCurrentFrameIndex))
+		if (g_RGBDAdapter.isFrameIdxInRangeOfRGBData(GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex))
 		{
-			GlobalCameraPoseOptState::getInstance().s_uCurrentFrameIndex += GlobalCameraPoseOptState::getInstance().s_uFrameInterval;
+			GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex += GlobalRGBDReaderState::getInstance().s_uFrameInterval;
 		}
 		
 	}
-	
-
 	//std::cout << transformation << std::endl;
 	//std::cout << g_CudaDepthSensor.getRigidTransform() << std::endl << std::endl;
 
@@ -1095,7 +1100,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 			}
 		}
 
-		if (GlobalAppState::get().s_reconstructionEnabled) 
+		if (GlobalAppState::get().s_reconstructionEnabled)
 		{
 			reconstruction_cameraposeopt();
 		}

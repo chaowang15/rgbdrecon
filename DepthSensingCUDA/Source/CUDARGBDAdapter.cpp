@@ -6,6 +6,8 @@
 extern "C" void copyFloat4Map(float4* d_output, float4* d_input, unsigned int width, unsigned int height);
 
 extern "C" void convertDepthRawToFloat(float* d_output, unsigned short* d_input, unsigned int width, unsigned int height, float minDepth, float maxDepth);
+
+// (GPU) Scale the raw RGBA data in byte between 0-255 to float values between 0.0-1.0 by dividing each byte value by 255.
 extern "C" void convertColorRawToFloat4(float4* d_output, BYTE* d_input, unsigned int width, unsigned int height);
 
 extern "C" void resampleFloatMap(float* d_colorMapResampledFloat, unsigned int outputWidth, unsigned int outputHeight, float* d_colorMapFloat, unsigned int inputWidth, unsigned int inputHeight, float* d_depthMaskMap);
@@ -115,15 +117,25 @@ HRESULT CUDARGBDAdapter::process(ID3D11DeviceContext* context)
 	////////////////////////////////////////////////////////////////////////////////////
 	// Process Color
 	////////////////////////////////////////////////////////////////////////////////////
-
+	
+	// Firstly copy the raw color data from CPU to GPU
 	const unsigned int bufferDimColorInput = m_RGBDSensor->getColorWidth()*m_RGBDSensor->getColorHeight();
-
 	cutilSafeCall(cudaMemcpy(d_colorMapRaw, m_RGBDSensor->getColorRGBX(), sizeof(unsigned int)*bufferDimColorInput, cudaMemcpyHostToDevice));
+	
+	// Scale the color raw data in bytes between 0-255 to ones in floats between 0.0-1.0
 	convertColorRawToFloat4(d_colorMapFloat4, d_colorMapRaw, m_RGBDSensor->getColorWidth(), m_RGBDSensor->getColorHeight());
 	
+	// CHAO NOTE:
+	// If the resolution from the RGBDSensor is different from the one in adapter, we re-sample the RGBDSensor data to fit the resolution in adapter.
+	// If they are the same, just copy the data. That is, the adapter resolution is the final RGBD data resolution we use for computation
+	// (there are some other resolutions, such as for rendering.)
+	//
+	// Note: the resolution (width and height) in the adapter is defined and loaded from the outside file "zParametersDefault.txt", while the 
+	// resolution in the RGBDSensor is the size of the loaded color image, either from the real-time depth camera or from local RGBD data.
 	if ((m_RGBDSensor->getColorWidth() == m_width) && (m_RGBDSensor->getColorHeight() == m_height)) {
 		copyFloat4Map(d_colorMapResampledFloat4, d_colorMapFloat4, m_width, m_height);
-	} else {
+	} 
+	else {
 		resampleFloat4Map(d_colorMapResampledFloat4, m_width, m_height, d_colorMapFloat4, m_RGBDSensor->getColorWidth(), m_RGBDSensor->getColorHeight());
 	}
 
@@ -136,10 +148,13 @@ HRESULT CUDARGBDAdapter::process(ID3D11DeviceContext* context)
 	resampleFloatMap(d_depthMapResampledFloat, m_width, m_height, d_depthMapFloat, m_RGBDSensor->getDepthWidth(), m_RGBDSensor->getDepthHeight(), NULL);
 
 	// Stop Timing
-	if (GlobalAppState::get().s_timingsDetailledEnabled) { cutilSafeCall(cudaDeviceSynchronize()); m_timer.stop(); TimingLog::totalTimeRGBDAdapter += m_timer.getElapsedTimeMS(); TimingLog::countTimeRGBDAdapter++; }
-
+	if (GlobalAppState::get().s_timingsDetailledEnabled) { 
+		cutilSafeCall(cudaDeviceSynchronize());
+		m_timer.stop();
+		TimingLog::totalTimeRGBDAdapter += m_timer.getElapsedTimeMS(); 
+		TimingLog::countTimeRGBDAdapter++;
+	}
 	m_frameNumber++;
-
 	return hr;
 }
 

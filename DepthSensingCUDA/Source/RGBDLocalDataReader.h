@@ -44,11 +44,13 @@ public:
 		return S_OK;
 	}
 
+	
 private:
 	void readRGBDAssociationFile(std::string filename);
 	bool readColorImgFromRGBData(std::string filename);
 	bool readDepthImgFromRGBData(std::string filename);
 	void readCameraPoseFromFile(std::string filename);
+
 };
 
 

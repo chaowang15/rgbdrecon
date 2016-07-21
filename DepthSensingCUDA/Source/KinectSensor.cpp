@@ -36,12 +36,12 @@ KinectSensor::KinectSensor()
 	initializeDepthIntrinsics(2.0f*NUI_CAMERA_SKELETON_TO_DEPTH_IMAGE_MULTIPLIER_320x240, 2.0f*NUI_CAMERA_SKELETON_TO_DEPTH_IMAGE_MULTIPLIER_320x240, 320.0f, 240.0f);
 	initializeColorIntrinsics(2.0f*NUI_CAMERA_SKELETON_TO_DEPTH_IMAGE_MULTIPLIER_320x240, 2.0f*NUI_CAMERA_SKELETON_TO_DEPTH_IMAGE_MULTIPLIER_320x240, 320.0f, 240.0f);
 
-	//if (GlobalCameraPoseOptState::getInstance().s_bReadRGBData)
+	//if (GlobalRGBDReaderState::getInstance().s_bReadRGBData)
 	//{
-	//	initializeDepthIntrinsics(GlobalCameraPoseOptState::getInstance().s_fx, GlobalCameraPoseOptState::getInstance().s_fy,
-	//		GlobalCameraPoseOptState::getInstance().s_cx, GlobalCameraPoseOptState::getInstance().s_cy);
-	//	initializeColorIntrinsics(GlobalCameraPoseOptState::getInstance().s_fx, GlobalCameraPoseOptState::getInstance().s_fy,
-	//		GlobalCameraPoseOptState::getInstance().s_cx, GlobalCameraPoseOptState::getInstance().s_cy);
+	//	initializeDepthIntrinsics(GlobalRGBDReaderState::getInstance().s_fx, GlobalRGBDReaderState::getInstance().s_fy,
+	//		GlobalRGBDReaderState::getInstance().s_cx, GlobalRGBDReaderState::getInstance().s_cy);
+	//	initializeColorIntrinsics(GlobalRGBDReaderState::getInstance().s_fx, GlobalRGBDReaderState::getInstance().s_fy,
+	//		GlobalRGBDReaderState::getInstance().s_cx, GlobalRGBDReaderState::getInstance().s_cy);
 	//}
 	//else
 	//{
@@ -78,16 +78,16 @@ KinectSensor::KinectSensor()
 		m_depthPtr = new USHORT[getDepthWidth()*getDepthHeight()];
 		m_colorPtr = new UCHAR[getDepthWidth()*getDepthHeight() * 3];
 	}
-	//if (GlobalCameraPoseOptState::getInstance().s_bReadRGBData)
+	//if (GlobalRGBDReaderState::getInstance().s_bReadRGBData)
 	//{
-	//	std::string filename = GlobalCameraPoseOptState::getInstance().s_strDataPath + GlobalCameraPoseOptState::getInstance().s_strAssociationFile;
+	//	std::string filename = GlobalRGBDReaderState::getInstance().s_strDataPath + GlobalRGBDReaderState::getInstance().s_strAssociationFile;
 	//	readRGBDAssociationFile(filename);
-	//	GlobalCameraPoseOptState::getInstance().s_uCurrentFrameIndex = GlobalCameraPoseOptState::getInstance().s_uMinimumFrameIndex;
+	//	GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex = GlobalRGBDReaderState::getInstance().s_uMinimumFrameIndex;
 	//	std::cout << "Reading RGB-D data ... " << std::endl;
 	//}
-	//if (GlobalCameraPoseOptState::getInstance().s_bReadCameraPoseFromFile)
+	//if (GlobalRGBDReaderState::getInstance().s_bReadCameraPoseFromFile)
 	//{
-	//	std::string filename = GlobalCameraPoseOptState::getInstance().s_strDataPath + GlobalCameraPoseOptState::getInstance().s_strTrajFile;
+	//	std::string filename = GlobalRGBDReaderState::getInstance().s_strDataPath + GlobalRGBDReaderState::getInstance().s_strTrajFile;
 	//	readCameraPoseFromFile(filename);
 	//}
 }
@@ -210,13 +210,13 @@ HRESULT KinectSensor::processDepth()
 	HRESULT hr = S_OK;
 
 	//  [5/14/2016 chaowang]
-	//if (GlobalCameraPoseOptState::getInstance().s_bReadRGBData)
+	//if (GlobalRGBDReaderState::getInstance().s_bReadRGBData)
 	//{ // Read depth data from RGB-D benchmark 
 
-	//	unsigned int frameIdx = GlobalCameraPoseOptState::getInstance().s_uCurrentFrameIndex;
+	//	unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex;
 	//	if (isFrameIdxInRangeOfRGBData(frameIdx))
 	//	{
-	//		std::string filename = GlobalCameraPoseOptState::getInstance().s_strDataPath + "depth/";
+	//		std::string filename = GlobalRGBDReaderState::getInstance().s_strDataPath + "depth/";
 	//		filename += m_strDepthImgName[frameIdx];
 	//		filename += ".png";
 	//		readDepthImgFromRGBData(filename);
@@ -248,7 +248,7 @@ HRESULT KinectSensor::processDepth()
 
 	NUI_DEPTH_IMAGE_PIXEL * pBuffer = (NUI_DEPTH_IMAGE_PIXEL *)LockedRect.pBits;
 
-	//GlobalCameraPoseOptState::getInstance().s_uCurrentFrameIndex++;
+	//GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex++;
 
 	////#pragma omp parallel for
 	//	for (int j = 0; j < (int)getDepthWidth()*(int)getDepthHeight(); j++)	{
@@ -257,7 +257,7 @@ HRESULT KinectSensor::processDepth()
 
 	USHORT* test = new USHORT[getDepthWidth()*getDepthHeight()];
 	float* depth = getDepthFloat();
-	int depthFactor = GlobalCameraPoseOptState::getInstance().s_uDepthScaleFactor / 1000;
+	int depthFactor = GlobalRGBDReaderState::getInstance().s_uDepthScaleFactor / 1000;
 	for (unsigned int j = 0; j < getDepthHeight(); j++) {
 		for (unsigned int i = 0; i < getDepthWidth(); i++) {
 
@@ -283,9 +283,9 @@ HRESULT KinectSensor::processDepth()
 	if (GlobalAppState::getInstance().s_bSaveRGBDImages)
 	{
 		cv::Mat depthImg2(getDepthHeight(), getDepthWidth(), CV_16UC1, m_depthPtr);
-		std::string strDepthImageName = m_strRGBDfolder + "/depth/" + std::to_string(GlobalCameraPoseOptState::getInstance().s_uCurrentFrameIndex) + ".png";
+		std::string strDepthImageName = m_strRGBDfolder + "/depth/" + std::to_string(GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex) + ".png";
 		cv::imwrite(strDepthImageName, depthImg2);
-		//GlobalCameraPoseOptState::getInstance().s_uCurrentFrameIndex++;
+		//GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex++;
 	}
 	hr = pTexture->UnlockRect(0);
 	if (FAILED(hr)) { return hr; };
@@ -310,13 +310,13 @@ HRESULT KinectSensor::processDepth()
 HRESULT KinectSensor::processColor()
 {
 	HRESULT hr = S_OK;
-	//if (GlobalCameraPoseOptState::getInstance().s_bReadRGBData)
+	//if (GlobalRGBDReaderState::getInstance().s_bReadRGBData)
 	//{ // Read color data from RGB-D benchmark 
 
-	//	unsigned int frameIdx = GlobalCameraPoseOptState::getInstance().s_uCurrentFrameIndex;
+	//	unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex;
 	//	if (isFrameIdxInRangeOfRGBData(frameIdx))
 	//	{
-	//		std::string filename = GlobalCameraPoseOptState::getInstance().s_strDataPath + "rgb/";
+	//		std::string filename = GlobalRGBDReaderState::getInstance().s_strDataPath + "rgb/";
 	//		filename += m_strColorImgName[frameIdx];
 	//		filename += ".png";
 	//		readColorImgFromRGBData(filename);
@@ -400,9 +400,9 @@ HRESULT KinectSensor::processColor()
 	if (GlobalAppState::getInstance().s_bSaveRGBDImages)
 	{
 		cv::Mat colorImg(getDepthHeight(), getDepthWidth(), CV_8UC3, m_colorPtr);
-		std::string strColorImageName = m_strRGBDfolder + "/rgb/" + std::to_string(GlobalCameraPoseOptState::getInstance().s_uCurrentFrameIndex) + ".png";
+		std::string strColorImageName = m_strRGBDfolder + "/rgb/" + std::to_string(GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex) + ".png";
 		cv::imwrite(strColorImageName, colorImg);
-		GlobalCameraPoseOptState::getInstance().s_uCurrentFrameIndex++;
+		GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex++;
 	}
 
 	hr = imageFrame.pFrameTexture->UnlockRect(0);
@@ -538,7 +538,7 @@ HRESULT KinectSensor::toggleAutoWhiteBalance()
 //				}
 //
 //				//cout << "Reading pose from depth stamp " << str << "..." << endl;
-//				if (GlobalCameraPoseOptState::getInstance().s_bIsCameraPoseQuaternion)
+//				if (GlobalRGBDReaderState::getInstance().s_bIsCameraPoseQuaternion)
 //				{
 //					float tx, ty, tz, qx, qy, qz, qw;
 //					sstr >> tx >> ty >> tz >> qx >> qy >> qz >> qw;
@@ -557,7 +557,7 @@ HRESULT KinectSensor::toggleAutoWhiteBalance()
 //					// The groundtruth trajectories in the ICL-NUIM RGB-D data are generated with negative fy (-480.0), so
 //					// we make a correction for these trajectories to ensure that the direction of the model is consistent with
 //					// the scanning order.
-//					if (GlobalCameraPoseOptState::getInstance().s_uRGBDataType == 1)
+//					if (GlobalRGBDReaderState::getInstance().s_uRGBDataType == 1)
 //					{
 //						transformation(0, 1) = -transformation(0, 1);
 //						transformation(1, 0) = -transformation(1, 0);
@@ -593,7 +593,7 @@ HRESULT KinectSensor::toggleAutoWhiteBalance()
 //bool KinectSensor::readDepthImgFromRGBData(std::string filename)
 //{
 //	float* depthPtr = getDepthFloat();
-//	int scaleFactor = GlobalCameraPoseOptState::getInstance().s_uDepthScaleFactor;
+//	int scaleFactor = GlobalRGBDReaderState::getInstance().s_uDepthScaleFactor;
 //	cv::Mat I = cv::imread(filename, CV_LOAD_IMAGE_ANYDEPTH);
 //	if (I.depth() == CV_16U)
 //	{

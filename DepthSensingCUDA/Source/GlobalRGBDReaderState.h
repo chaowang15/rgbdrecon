@@ -13,9 +13,10 @@
 
 // CHAO: The values of all these constant parameters are predefined in the "zParametersCameraPoseOpt.txt" file in the project root,
 // and they are set when the TXT file is read in the main() function just after the beginning of this program runs.
-#define X_GLOBAL_CAMERAPOSEOPT_STATE_FIELDS \
+#define X_GLOBAL_RGBDREADER_STATE_FIELDS \
 	X(bool, s_bReadRGBData) \
 	X(bool, s_bReadCameraPoseFromFile)\
+	X(bool, s_bRunPoseEstimation)\
 	X(bool, s_bStoreCameraPoseIntoFile)\
 	X(bool, s_bIsCameraPoseQuaternion)\
 	X(bool, s_bDrawCorrespondenceBetweenImages) \
@@ -56,11 +57,11 @@
 #endif
 
 
-class GlobalCameraPoseOptState
+class GlobalRGBDReaderState
 {
 public:
 #define X(type, name) type name;
-	X_GLOBAL_CAMERAPOSEOPT_STATE_FIELDS
+	X_GLOBAL_RGBDREADER_STATE_FIELDS
 #undef X
 
 		//! sets the parameter file and reads
@@ -73,7 +74,7 @@ public:
 	void readMembers() {
 #define X(type, name) \
 	if (!s_ParameterFile.readParameter(std::string(#name), name)) {MLIB_WARNING(std::string(#name).append(" ").append("uninitialized"));	name = type();}
-		X_GLOBAL_CAMERAPOSEOPT_STATE_FIELDS
+		X_GLOBAL_RGBDREADER_STATE_FIELDS
 #undef X
 	}
 
@@ -81,12 +82,12 @@ public:
 	void print() {
 #define X(type, name) \
 	std::cout << #name " = " << name << std::endl;
-		X_GLOBAL_CAMERAPOSEOPT_STATE_FIELDS
+		X_GLOBAL_RGBDREADER_STATE_FIELDS
 #undef X
 	}
 
-	static GlobalCameraPoseOptState& getInstance() {
-		static GlobalCameraPoseOptState s;
+	static GlobalRGBDReaderState& getInstance() {
+		static GlobalRGBDReaderState s;
 		return s;
 	}
 private:

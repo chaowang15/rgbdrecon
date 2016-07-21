@@ -1,7 +1,8 @@
 // False to use Kinect to scan
 s_bReadRGBData = true  // if false, all the rest parameters below will NOT be used
-s_bReadCameraPoseFromFile = false
-s_bStoreCameraPoseIntoFile = true // You still need to press 'S' to store the camera pose into file after running the program
+s_bReadCameraPoseFromFile = true
+s_bRunPoseEstimation = true
+s_bStoreCameraPoseIntoFile = true // You still need to press 'S' to store the camera pose into file after the reconstruction process
 s_bIsCameraPoseQuaternion = true
 s_bDrawCorrespondenceBetweenImages = false
 s_bCheckDepthValInReliableRange = false
@@ -27,21 +28,26 @@ s_uRGBDataType = 1
 //s_cy = 239.50
 
 // camera calibration matrix for the Asus XTion depth camera
-s_fx = 570.342163
-s_fy = 570.342224
-s_cx = 320
-s_cy = 240
+//s_fx = 570.342163
+//s_fy = 570.342224
+//s_cx = 320
+//s_cy = 240
+s_fx = 285.1710815
+s_fy = 285.1711120
+s_cx = 160
+s_cy = 120
 
 
 // Data paths
 //s_strDataPath = "../../../data/test/"
 //s_strDataPath = " ../../../data/RGBD_benchmark/rgbd_dataset_freiburg1_floor/"
 //s_strDataPath = " ../../../data/ICL-NUIM/living_room_traj2_frei_png.tar/"
-s_strDataPath = " ../../../data/room_board_rgb640x480_depth640x480/"
+s_strDataPath = " ../../../data/room_board_320x240/"
 //s_strTrajFile = "traj_method0_groundtruth"
-s_strTrajFile = "livingRoom2.gt.freiburg"
+//s_strTrajFile = "livingRoom2.gt.freiburg"
 //s_strTrajFile = "traj_method0"
-s_strAssociationFile = "association.txt" // CHAO: the order in the association file MUST be: DEPTH first RGB second
+s_strTrajFile = "traj_camera2.txt"
+s_strAssociationFile = "association_camera2.txt" // CHAO: the order in the association file MUST be: DEPTH first RGB second
 
 // Camera pose estimation method type
 // 0: original method (seems geometrical ICP only, from original code)
@@ -70,10 +76,14 @@ s_uFrameInterval = 1 // frame jumping interval
 s_uCurrentFrameIndex = 0 // frame index you are reading currently (always starting from 0)
 
 // Parameters for RGB-D data
-s_depthWidth = 640
-s_depthHeight = 480
-s_colorWidth = 640
-s_colorHeight = 480
+//s_depthWidth = 640
+//s_depthHeight = 480
+//s_colorWidth = 640
+//s_colorHeight = 480
+s_depthWidth = 320
+s_depthHeight = 240
+s_colorWidth = 320
+s_colorHeight = 240
 s_maxReliableDepth = 4500
 s_minReliableDepth = 500
 

@@ -115,6 +115,8 @@ __global__ void copyFloat4MapDevice(float4* d_output, float4* d_input, unsigned 
 	d_output[y*width+x] = d_input[y*width+x];
 }
 
+//
+// GPU copy float4 data
 extern "C" void copyFloat4Map(float4* d_output, float4* d_input, unsigned int width, unsigned int height)
 {
 	const dim3 gridSize((width + T_PER_BLOCK - 1)/T_PER_BLOCK, (height + T_PER_BLOCK - 1)/T_PER_BLOCK);
@@ -148,6 +150,7 @@ __global__ void convertColorRawToFloatDevice(float4* d_output, BYTE* d_input, un
 	}
 }
 
+// (GPU) Scale the raw RGBA data in byte between 0-255 to float values between 0.0-1.0 by dividing each byte value by 255.
 extern "C" void convertColorRawToFloat4(float4* d_output, BYTE* d_input, unsigned int width, unsigned int height)
 {
 	const dim3 gridSize((width + T_PER_BLOCK - 1)/T_PER_BLOCK, (height + T_PER_BLOCK - 1)/T_PER_BLOCK);

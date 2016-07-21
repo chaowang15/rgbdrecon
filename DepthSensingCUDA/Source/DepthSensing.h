@@ -8,7 +8,7 @@
 
 #include "GlobalAppState.h"
 #include "GlobalCameraTrackingState.h"
-#include "GlobalCameraPoseOptState.h" // CHAO
+#include "GlobalRGBDReaderState.h" // CHAO
 
 #include "TimingLog.h"
 #include "StdOutputLogger.h"

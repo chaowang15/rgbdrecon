@@ -49,7 +49,6 @@ __global__ void renderKernel(HashData hashData, RayCastData rayCastData, DepthCa
 		//if (maxInterval < minInterval) {
 		//	printf("ERROR (%d,%d): [ %f, %f ]\n", x, y, minInterval, maxInterval);
 		//}
-
 		rayCastData.traverseCoarseGridSimpleSampleAll(hashData, cameraData, worldCamPos, worldDir, camDir, make_int3(x,y,1), minInterval, maxInterval);
 	} 
 }

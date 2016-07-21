@@ -200,7 +200,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Source\GlobalAppState.cpp" />
-    <ClCompile Include="Source\GlobalCameraTrackingState.cpp" />
+    <ClCompile Include="Source\GlobalRGBDReaderState.cpp" />
     <ClCompile Include="Source\ICPErrorLog.cpp" />
     <ClCompile Include="Source\IntelSensor.cpp" />
     <ClCompile Include="Source\KinectOneSensor.cpp" />
@@ -258,7 +258,7 @@
     <ClInclude Include="Source\DXUT\Optional\SDKmisc.h" />
     <ClInclude Include="Source\Eigen.h" />
     <ClInclude Include="Source\GlobalAppState.h" />
-    <ClInclude Include="Source\GlobalCameraPoseOptState.h" />
+    <ClInclude Include="Source\GlobalRGBDReaderState.h" />
     <ClInclude Include="Source\GlobalCameraTrackingState.h" />
     <ClInclude Include="Source\ICPErrorLog.h" />
     <ClInclude Include="Source\ICPUtil.h" />

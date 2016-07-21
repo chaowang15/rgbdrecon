@@ -41,7 +41,6 @@
   <ItemGroup>
     <ClCompile Include="Source\DepthSensing.cpp" />
     <ClCompile Include="Source\GlobalAppState.cpp" />
-    <ClCompile Include="Source\GlobalCameraTrackingState.cpp" />
     <ClCompile Include="Source\ICPErrorLog.cpp" />
     <ClCompile Include="Source\NetworkServer.cpp" />
     <ClCompile Include="Source\stdafx.cpp" />
@@ -164,6 +163,7 @@
     <ClCompile Include="Source\RGBDLocalDataReader.cpp">
       <Filter>Sensors</Filter>
     </ClCompile>
+    <ClCompile Include="Source\GlobalRGBDReaderState.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\CameraParams.h" />
@@ -321,10 +321,10 @@
     <ClInclude Include="Source\DX11Utils.h">
       <Filter>DXHelper</Filter>
     </ClInclude>
-    <ClInclude Include="Source\GlobalCameraPoseOptState.h" />
     <ClInclude Include="Source\RGBDLocalDataReader.h">
       <Filter>Sensors</Filter>
     </ClInclude>
+    <ClInclude Include="Source\GlobalRGBDReaderState.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\QuadDrawer.hlsl">

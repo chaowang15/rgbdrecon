@@ -6,7 +6,7 @@
 #include <d3dx9math.h>
 
 #include "mLib.h"
-#include "GlobalCameraPoseOptState.h"
+#include "GlobalRGBDReaderState.h"
 
 class RGBDSensor
 {
@@ -107,7 +107,7 @@ public:
 
 	// Determine if a frame index is in the reasonable range
 	inline bool isFrameIdxInRangeOfRGBData(const unsigned int& frameIdx) {
-		return (frameIdx < GlobalCameraPoseOptState::getInstance().s_uMaximumFrameIndex) &&
+		return (frameIdx < GlobalRGBDReaderState::getInstance().s_uMaximumFrameIndex) &&
 			(frameIdx < (unsigned int)m_strDepthImgName.size()) && (frameIdx >= 0);
 	}
 

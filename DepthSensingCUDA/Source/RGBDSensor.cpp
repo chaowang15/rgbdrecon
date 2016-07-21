@@ -322,8 +322,8 @@ void RGBDSensor::saveRecordedFramesToFile( const std::string& filename )
 
 void RGBDSensor::storeTrajectoryIntoFile(const std::string& filename)
 {
-	int frameNameIdx = GlobalCameraPoseOptState::getInstance().s_uMinimumFrameIndex;
-	int frameInterval = GlobalCameraPoseOptState::getInstance().s_uFrameInterval;
+	int frameNameIdx = GlobalRGBDReaderState::getInstance().s_uMinimumFrameIndex;
+	int frameInterval = GlobalRGBDReaderState::getInstance().s_uFrameInterval;
 	std::ofstream writeOut(filename, std::ios::trunc); // write the data appending to the end of the file
 	for (int idx = 0; idx != m_recordedTrajectory.size(); idx++)
 	{
