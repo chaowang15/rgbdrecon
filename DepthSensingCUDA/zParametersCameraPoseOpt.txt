@@ -1,7 +1,7 @@
 // False to use Kinect to scan
 s_bReadRGBData = true  // if false, all the rest parameters below will NOT be used
 s_bReadCameraPoseFromFile = true
-s_bRunPoseEstimation = true
+s_bRunPoseEstimation = false
 s_bStoreCameraPoseIntoFile = true // You still need to press 'S' to store the camera pose into file after the reconstruction process
 s_bIsCameraPoseQuaternion = true
 s_bDrawCorrespondenceBetweenImages = false
@@ -9,8 +9,8 @@ s_bCheckDepthValInReliableRange = false
 s_bUseWeightedOptimization = false
 
 // 0 = TUM RGB-D, 1 = ICL-NUIM, 2 = Self-Scanned with Kinect v1.0
-// NOTE: the depth and rgb images for all the data is the same, while the difference is the calibration matrix parameters below.
-s_uRGBDataType = 1
+// NOTE: There are some corrections on the trajectories of ICL-NUIM data in the code. See the comments on the calibration matrix below for details. 
+s_uRGBDataType = 0
 
 // camera calibration matrix for TUM RGB-D data
 //s_fx = 525.0
@@ -19,11 +19,12 @@ s_uRGBDataType = 1
 //s_cy = 239.5
 
 // camera calibration matrix for the ICL-NUIM data
-// NOTE: originally fy = -480.0 in the ICL-NUIM data, but it will reverse the y-coordinate of the reconstructed model.
-// So we made some correction on each trajectory in the code to enable the consistency. See "readCameraPoseFromFile()" 
-// in "KinectSensor.cpp" for details. Therefore, please use positive fy (480.0) here.
+// NOTE: originally fy = -480.0, which will result in a inverse-y-coordinate upside-down model after reconstruction.
+// So to generate a normal model, we made some correction on each trajectory in the code to enable the consistency. 
+// See "readCameraPoseFromFile()" in "RGBDLocalDataReader.cpp" for details. Please set the above s_uRGBDataType = 1 and 
+// use positive fy = 480.0 here.
 //s_fx = 481.20
-//s_fy = 480.0 // positive value instead of the original negative one
+//s_fy = 480.0 // positive value instead of original negative one
 //s_cx = 319.50
 //s_cy = 239.50
 
@@ -42,12 +43,12 @@ s_cy = 120
 //s_strDataPath = "../../../data/test/"
 //s_strDataPath = " ../../../data/RGBD_benchmark/rgbd_dataset_freiburg1_floor/"
 //s_strDataPath = " ../../../data/ICL-NUIM/living_room_traj2_frei_png.tar/"
-s_strDataPath = " ../../../data/room_board_320x240/"
+s_strDataPath = " ../../../data/room_board_320x240_flipped/"
 //s_strTrajFile = "traj_method0_groundtruth"
 //s_strTrajFile = "livingRoom2.gt.freiburg"
 //s_strTrajFile = "traj_method0"
-s_strTrajFile = "traj_camera2.txt"
-s_strAssociationFile = "association_camera2.txt" // CHAO: the order in the association file MUST be: DEPTH first RGB second
+s_strTrajFile = "traj.txt"
+s_strAssociationFile = "association.txt" // CHAO: the order in the association file MUST be: DEPTH first RGB second
 
 // Camera pose estimation method type
 // 0: original method (seems geometrical ICP only, from original code)

@@ -11,9 +11,9 @@ CDXUTTextHelper*            g_pTxtHelper = NULL;
 bool						g_renderText = true;
 bool						g_bRenderHelp = true;
 
-CModelViewerCamera          g_Camera;               // A model viewing camera
-CUDARGBDSensor				g_CudaDepthSensor; // CHAO: Top sensor object containing pointer to CUDARGBDAdapter object below
-CUDARGBDAdapter				g_RGBDAdapter; // CHAO: contains pointer to RGBDSensor object, which contains raw color and depth array data (See the function getRGBDSensor() below in this file)
+CModelViewerCamera          g_Camera; // A model viewing camera
+CUDARGBDSensor				g_CudaDepthSensor; // Toppest object containing pointer to CUDARGBDAdapter object below
+CUDARGBDAdapter				g_RGBDAdapter; // Contains pointer to RGBDSensor object, which is the lowest sensor object to handle raw RGBD data
 DX11RGBDRenderer			g_RGBDRenderer;
 DX11CustomRenderTarget		g_CustomRenderTarget;
 
@@ -158,18 +158,24 @@ int main(int argc, char** argv)
 		//}
 		
 
+		//----------------------------------------------------------------------
+		// CHAO NOTE
+		// Only the following functions are related to the 
+		// And ONLY the "OnD3D11CreateDevice" and "OnD3D11FrameRender" are related to the main voxel-hashing 
+		// algorithm process written by the author.. All the others are either empty or contains nothing related 
+		// to the algorithm. So we only need to check these two functions.
 		// Set DXUT callbacks
 		DXUTSetCallbackDeviceChanging( ModifyDeviceSettings );
 		DXUTSetCallbackMsgProc( MsgProc );
-		DXUTSetCallbackKeyboard( OnKeyboard );
+		DXUTSetCallbackKeyboard( OnKeyboard ); // for keyboard events
 		DXUTSetCallbackFrameMove( OnFrameMove );
-
 		DXUTSetCallbackD3D11DeviceAcceptable( IsD3D11DeviceAcceptable );
-		DXUTSetCallbackD3D11DeviceCreated( OnD3D11CreateDevice );
+		DXUTSetCallbackD3D11DeviceCreated( OnD3D11CreateDevice ); // create and initialize devices and allocate memories (only run once)
 		DXUTSetCallbackD3D11SwapChainResized( OnD3D11ResizedSwapChain );
-		DXUTSetCallbackD3D11FrameRender( OnD3D11FrameRender );
+		DXUTSetCallbackD3D11FrameRender( OnD3D11FrameRender ); // render each frame by loading RGBD frame and reconstruct (run continuously for each frame)
 		DXUTSetCallbackD3D11SwapChainReleasing( OnD3D11ReleasingSwapChain );
 		DXUTSetCallbackD3D11DeviceDestroyed( OnD3D11DestroyDevice );
+		//----------------------------------------------------------------------
 
 		InitApp();
 		DXUTInit( true, true ); // Parse the command line, show msgboxes on error, and an extra cmd line param to force REF for now
@@ -308,6 +314,7 @@ void StopScanningAndExtractIsoSurfaceMC(const std::string& filename)
 
 	vec4f posWorld = g_sceneRep->getLastRigidTransform()*GlobalAppState::get().s_streamingPos; // trans lags one frame
 	vec3f p(posWorld.x, posWorld.y, posWorld.z);
+	//vec3f p(0, 0, 0);
 
 
 	g_marchingCubesHashSDF->clearMeshBuffer();
@@ -320,8 +327,14 @@ void StopScanningAndExtractIsoSurfaceMC(const std::string& filename)
 		g_marchingCubesHashSDF->extractIsoSurface(*g_chunkGrid, g_rayCast->getRayCastData(), p, GlobalAppState::getInstance().s_streamingRadius);
 	}
 
-	const mat4f& rigidTransform = g_sceneRep->getLastRigidTransform();
-	g_marchingCubesHashSDF->saveMesh(filename, &rigidTransform);
+	// CHAO NOTE
+	// This is the original code, which will transform the output model with the last rigid transformation.
+	// The output model is NOT suitable for some post-processing such as texture mapping.
+	//const mat4f& rigidTransform = g_sceneRep->getLastRigidTransform();
+	//g_marchingCubesHashSDF->saveMesh(filename, &rigidTransform);
+
+	// Newly modified: Do NOT modify the output model with any transformation.
+	g_marchingCubesHashSDF->saveMesh(filename);
 
 	std::cout << "Mesh generation time " << t.getElapsedTime() << " seconds" << std::endl;
 
@@ -1068,8 +1081,17 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 	pd3dImmediateContext->ClearRenderTargetView(pRTV, ClearColor);
 	pd3dImmediateContext->ClearDepthStencilView(pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-	// if we have received any valid new depth data we may need to draw
-	// CHAO: get the input color and depth data, and post-process them with tools such as biliteral filtering on depth and color
+
+	// CHAO NOTE
+	// This process() function from the CUDARGBDSensor object does the following work:
+	// 1) Load the input raw RGB image and depth image and push these raw data into GPU;
+	// 2) Scale the color raw data in bytes between 0-255 to ones in floats between 0.0-1.0;
+	// 3) Resample the color float data into the adapter resolution if the input color resolution is different from the adapter resolution;
+	// 4) Resample the depth data into the adapter resolution if the input depth resolution is different from the adapter resolution.
+	// 5) Compute the corresponding 3D points and its normal for each 2D pixel point in RGB image.
+	// 
+	// Note: there are some other sub-processes such as biliteral filtering during resampling and depth erosion on the depth data, but all
+	// of them are NOT run by default.
 	HRESULT bGotDepth = g_CudaDepthSensor.process(pd3dImmediateContext);
 
 	// Filtering
@@ -1083,13 +1105,17 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 	///////////////////////////////////////
 
 	//Start Timing
-	if (GlobalAppState::get().s_timingsDetailledEnabled) { GlobalAppState::get().WaitForGPU(); GlobalAppState::get().s_Timer.start(); }
+	if (GlobalAppState::get().s_timingsDetailledEnabled) {
+		GlobalAppState::get().WaitForGPU(); 
+		GlobalAppState::get().s_Timer.start();
+	}
 
 
 	mat4f view = MatrixConversion::toMlib(*g_Camera.GetViewMatrix());
 
 	mat4f t = mat4f::identity();
-	t(1,1) *= -1.0f;	view = t * view * t;	//t is self-inverse
+	t(1,1) *= -1.0f;	
+	view = t * view * t;	//t is self-inverse
 
 	if (bGotDepth == S_OK) {
 		if (GlobalAppState::getInstance().s_recordData) 
@@ -1107,8 +1133,8 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 	}
 
 	if(GlobalAppState::get().s_RenderMode == 0) {
+		// Render the raw depth data for each frame
 		const mat4f renderIntrinsics = g_RGBDAdapter.getColorIntrinsics();
-
 		g_CustomRenderTarget.Clear(pd3dImmediateContext);
 		g_CustomRenderTarget.Bind(pd3dImmediateContext);
 		g_RGBDRenderer.RenderDepthMap(pd3dImmediateContext, g_CudaDepthSensor.getDepthMapRawFloat(), g_CudaDepthSensor.getColorMapFilteredFloat4(), g_RGBDAdapter.getWidth(), g_RGBDAdapter.getHeight(), g_RGBDAdapter.getColorIntrinsicsInv(), view, renderIntrinsics, g_CustomRenderTarget.getWidth(), g_CustomRenderTarget.getHeight(), GlobalAppState::get().s_renderingDepthDiscontinuityThresOffset, GlobalAppState::get().s_renderingDepthDiscontinuityThresLin);
@@ -1119,6 +1145,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 	else if(GlobalAppState::get().s_RenderMode == 1)
 	{
 		//default render mode
+		// Render the ray-casted data
 		const mat4f& renderIntrinsics = g_RGBDAdapter.getColorIntrinsics();
 
 		//always render, irrespective whether there is a new depth frame available

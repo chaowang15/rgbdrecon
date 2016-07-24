@@ -677,6 +677,13 @@ __global__ void computeNormalsDevice(float4* d_output, float4* d_input, unsigned
 
 	if(x > 0 && x < width-1 && y > 0 && y < height-1)
 	{
+		//        MC
+		//        |
+		//  CM - CC - CP
+		//        |
+		//        PC
+		// NOTE: in DirectX (left-handed) rendering frame, the position of MC and PC should be swapped.
+		// 
 		const float4 CC = d_input[(y+0)*width+(x+0)];
 		const float4 PC = d_input[(y+1)*width+(x+0)];
 		const float4 CP = d_input[(y+0)*width+(x+1)];
@@ -690,7 +697,10 @@ __global__ void computeNormalsDevice(float4* d_output, float4* d_input, unsigned
 
 			if(l > 0.0f)
 			{
-				d_output[y*width+x] = make_float4(n/-l, 1.0f);
+				// CHAO NOTE: TO DO
+				// Originally here is -l instead of l. However, it seems l is correct. Maybe it is because
+				// the difference between DirectX rendering frame and the global world frame.
+				d_output[y*width+x] = make_float4(n/l, 1.0f);
 			}
 		}
 	}
@@ -1079,22 +1089,53 @@ inline __device__ float bilinearInterpolationFloat(float x, float y, float* d_in
 	const float beta  = y - p00.y;
 
 	float s0 = 0.0f; float w0 = 0.0f;
-	if(p00.x < imageWidth && p00.y < imageHeight) { float v00 = d_input[p00.y*imageWidth + p00.x]; if(v00 != MINF) { s0 += (1.0f-alpha)*v00; w0 += (1.0f-alpha); } }
-	if(p10.x < imageWidth && p10.y < imageHeight) { float v10 = d_input[p10.y*imageWidth + p10.x]; if(v10 != MINF) { s0 +=		 alpha *v10; w0 +=		 alpha ; } }
+	if(p00.x < imageWidth && p00.y < imageHeight) { 
+		float v00 = d_input[p00.y*imageWidth + p00.x]; 
+		if(v00 != MINF) { 
+			s0 += (1.0f-alpha)*v00; 
+			w0 += (1.0f-alpha);
+		} 
+	}
+	if(p10.x < imageWidth && p10.y < imageHeight) { 
+		float v10 = d_input[p10.y*imageWidth + p10.x]; 
+		if(v10 != MINF) { 
+			s0 += alpha *v10; 
+			w0 += alpha ;
+		} 
+	}
 
 	float s1 = 0.0f; float w1 = 0.0f;
-	if(p01.x < imageWidth && p01.y < imageHeight) { float v01 = d_input[p01.y*imageWidth + p01.x]; if(v01 != MINF) { s1 += (1.0f-alpha)*v01; w1 += (1.0f-alpha);} }
-	if(p11.x < imageWidth && p11.y < imageHeight) { float v11 = d_input[p11.y*imageWidth + p11.x]; if(v11 != MINF) { s1 +=		 alpha *v11; w1 +=		 alpha ;} }
+	if(p01.x < imageWidth && p01.y < imageHeight) { 
+		float v01 = d_input[p01.y*imageWidth + p01.x]; 
+		if(v01 != MINF) { 
+			s1 += (1.0f-alpha)*v01; 
+			w1 += (1.0f-alpha);
+		} 
+	}
+	if(p11.x < imageWidth && p11.y < imageHeight) { 
+		float v11 = d_input[p11.y*imageWidth + p11.x]; 
+		if(v11 != MINF) { 
+			s1 += alpha *v11; 
+			w1 += alpha ;
+		} 
+	}
 
 	const float p0 = s0/w0;
 	const float p1 = s1/w1;
 
 	float ss = 0.0f; float ww = 0.0f;
-	if(w0 > 0.0f) { ss += (1.0f-beta)*p0; ww += (1.0f-beta); }
-	if(w1 > 0.0f) { ss +=		beta *p1; ww +=		  beta ; }
-
-	if(ww > 0.0f) return ss/ww;
-	else		  return MINF;
+	if(w0 > 0.0f) {
+		ss += (1.0f - beta)*p0;
+		ww += (1.0f - beta);
+	}
+	if(w1 > 0.0f) { 
+		ss += beta *p1;
+		ww += beta;
+	}
+	if(ww > 0.0f) 
+		return ss/ww;
+	else
+		return MINF;
 }
 
 __global__ void resampleFloatMapDevice(float* d_colorMapResampledFloat, float* d_colorMapFloat, unsigned int inputWidth, unsigned int inputHeight, unsigned int outputWidth, unsigned int outputHeight)
@@ -1117,6 +1158,7 @@ __global__ void resampleFloatMapDevice(float* d_colorMapResampledFloat, float* d
 	}
 }
 
+// (GPU) Re-sample the input image map into the output image map with scaling and bilinear interpolation
 extern "C" void resampleFloatMap(float* d_colorMapResampledFloat, unsigned int outputWidth, unsigned int outputHeight, float* d_colorMapFloat, unsigned int inputWidth, unsigned int inputHeight)
 {
 	const dim3 gridSize((outputWidth + T_PER_BLOCK - 1)/T_PER_BLOCK, (outputHeight + T_PER_BLOCK - 1)/T_PER_BLOCK);

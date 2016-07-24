@@ -10,7 +10,10 @@ extern "C" void convertDepthRawToFloat(float* d_output, unsigned short* d_input,
 // (GPU) Scale the raw RGBA data in byte between 0-255 to float values between 0.0-1.0 by dividing each byte value by 255.
 extern "C" void convertColorRawToFloat4(float4* d_output, BYTE* d_input, unsigned int width, unsigned int height);
 
+// (GPU) Re-sample the input image map into the output image map with scaling and bilinear interpolation
 extern "C" void resampleFloatMap(float* d_colorMapResampledFloat, unsigned int outputWidth, unsigned int outputHeight, float* d_colorMapFloat, unsigned int inputWidth, unsigned int inputHeight, float* d_depthMaskMap);
+
+
 extern "C" void resampleFloat4Map(float4* d_colorMapResampledFloat4, unsigned int outputWidth, unsigned int outputHeight, float4* d_colorMapFloat4, unsigned int inputWidth, unsigned int inputHeight);
 
 CUDARGBDAdapter::CUDARGBDAdapter()
@@ -145,6 +148,9 @@ HRESULT CUDARGBDAdapter::process(ID3D11DeviceContext* context)
 	
 	const unsigned int bufferDimDepthInput = m_RGBDSensor->getDepthWidth()*m_RGBDSensor->getDepthHeight();
 	cutilSafeCall(cudaMemcpy(d_depthMapFloat, m_RGBDSensor->getDepthFloat(), sizeof(float)*m_RGBDSensor->getDepthWidth()* m_RGBDSensor->getDepthHeight(), cudaMemcpyHostToDevice));
+	
+	// Re-sample the input depth image into the output image with adapter's resolution. If the input depth image resolution is the same as the adapther one,
+	// then this function only copies the data.
 	resampleFloatMap(d_depthMapResampledFloat, m_width, m_height, d_depthMapFloat, m_RGBDSensor->getDepthWidth(), m_RGBDSensor->getDepthHeight(), NULL);
 
 	// Stop Timing

@@ -143,7 +143,15 @@ HRESULT CUDARGBDSensor::process(ID3D11DeviceContext* context)
 {
 	HRESULT hr = S_OK;
 
-	// CHAO: Get the input color and depth here
+	// CHAO NOTE:
+	// This process() function from the RGBDAdapter object does the following work:
+	// 1) Load the input raw RGB image and depth image and push these raw data into GPU;
+	// 2) Scale the color raw data in bytes between 0-255 to ones in floats between 0.0-1.0;
+	// 3) Resample the color float data into the adapter resolution if the input color resolution is different from the adapter resolution;
+	// 4) Resample the depth data into the adapter resolution if the input depth resolution is different from the adapter resolution.
+	// 
+	// P.S. The adapter resolution is defined by "s_adapterWidth" and "s_adapterHeight" in the outside "zParametersDefault.txt" file.
+	//
 	if (m_RGBDAdapter->process(context) == S_FALSE)	return S_FALSE;
 
 	////////////////////////////////////////////////////////////////////////////////////
@@ -155,6 +163,7 @@ HRESULT CUDARGBDSensor::process(ID3D11DeviceContext* context)
 		cutilSafeCall(cudaDeviceSynchronize()); m_timer.start();
 	}
 
+	// Gauss Filtering the color data if needed (NOT used by default), or just copy the data
 	if (m_bFilterIntensityValues)	
 		gaussFilterFloat4Map(m_depthCameraData.d_colorData, m_RGBDAdapter->getColorMapResampledFloat4(), m_fBilateralFilterSigmaDIntensity, m_fBilateralFilterSigmaRIntensity, m_RGBDAdapter->getWidth(), m_RGBDAdapter->getHeight());
 	else							
@@ -173,27 +182,39 @@ HRESULT CUDARGBDSensor::process(ID3D11DeviceContext* context)
 	////////////////////////////////////////////////////////////////////////////////////
 
 	//Start Timing
-	if(GlobalAppState::get().s_timingsDetailledEnabled) { cutilSafeCall(cudaDeviceSynchronize()); m_timer.start(); }
+	if(GlobalAppState::get().s_timingsDetailledEnabled) { 
+		cutilSafeCall(cudaDeviceSynchronize()); 
+		m_timer.start(); 
+	}
 
+	// Gauss Filtering the depth data if needed (NOT used by default), or just copy the data
 	if(m_bFilterDepthValues)
 		gaussFilterFloatMap(d_depthMapFilteredFloat, m_RGBDAdapter->getDepthMapResampledFloat(), m_fBilateralFilterSigmaD, m_fBilateralFilterSigmaR, m_RGBDAdapter->getWidth(), m_RGBDAdapter->getHeight());
 	else					
 		copyFloatMap(d_depthMapFilteredFloat, m_RGBDAdapter->getDepthMapResampledFloat(), m_RGBDAdapter->getWidth(), m_RGBDAdapter->getHeight());
 
-	//TODO this call seems not needed as the depth map is overwriten later anyway later anyway...
+	// CHAO NOTE: This function is actually useless.
+	//TODO this call seems not needed as the depth map is overwriten later anyway...
 	setInvalidFloatMap(m_depthCameraData.d_depthData, m_RGBDAdapter->getWidth(), m_RGBDAdapter->getHeight());
 
 	// Stop Timing
-	if(GlobalAppState::get().s_timingsDetailledEnabled) { cutilSafeCall(cudaDeviceSynchronize()); m_timer.stop(); TimingLog::totalTimeFilterDepth += m_timer.getElapsedTimeMS(); TimingLog::countTimeFilterDepth++; }
+	if(GlobalAppState::get().s_timingsDetailledEnabled) { 
+		cutilSafeCall(cudaDeviceSynchronize()); 
+		m_timer.stop(); 
+		TimingLog::totalTimeFilterDepth += m_timer.getElapsedTimeMS(); 
+		TimingLog::countTimeFilterDepth++; 
+	}
 
 	////////////////////////////////////////////////////////////////////////////////////
 	// Render to Color Space
 	////////////////////////////////////////////////////////////////////////////////////
+	// Start Timing
+	if(GlobalAppState::get().s_timingsDetailledEnabled) { 
+		cutilSafeCall(cudaDeviceSynchronize()); 
+		m_timer.start();
+	}
 
-	//Start Timing
-	if(GlobalAppState::get().s_timingsDetailledEnabled) { cutilSafeCall(cudaDeviceSynchronize()); m_timer.start(); }
-
-	if(GlobalAppState::get().s_bUseCameraCalibration)
+	if(GlobalAppState::get().s_bUseCameraCalibration) // False by default so does NOT run this part
 	{	
 		mat4f depthExtInverse = m_RGBDAdapter->getDepthExtrinsicsInv();
 	
@@ -216,7 +237,7 @@ HRESULT CUDARGBDSensor::process(ID3D11DeviceContext* context)
 		copyFloatMap(m_depthCameraData.d_depthData, d_depthMapFilteredFloat, m_RGBDAdapter->getWidth(), m_RGBDAdapter->getHeight());
 	}
 
-
+	// Depth image erosion (does NOT run by default)
 	bool bErode = false;
 	if (bErode) {
 		unsigned int numIter = 20;
@@ -232,20 +253,27 @@ HRESULT CUDARGBDSensor::process(ID3D11DeviceContext* context)
 	}
 
 	//TODO check whether the intensity is actually used
+	// Convert the RGB color data into grayscale intensity one
 	convertColorToIntensityFloat(d_intensityMapFilteredFloat, m_depthCameraData.d_colorData,  m_RGBDAdapter->getWidth(), m_RGBDAdapter->getHeight());
 
-
+	// Compute the corresponding 3D points and its normal for each 2D pixel point in RGB image.
 	float4x4 M((m_RGBDAdapter->getColorIntrinsicsInv()).ptr());
 	m_depthCameraData.updateParams(getDepthCameraParams());
 	convertDepthFloatToCameraSpaceFloat4(d_cameraSpaceFloat4, m_depthCameraData.d_depthData, M, m_RGBDAdapter->getWidth(), m_RGBDAdapter->getHeight(), m_depthCameraData); // !!! todo
 	computeNormals(d_normalMapFloat4, d_cameraSpaceFloat4, m_RGBDAdapter->getWidth(), m_RGBDAdapter->getHeight());
 
+	// Copy the depth and rgb data into the texture array
 	float4x4 Mintrinsics((m_RGBDAdapter->getColorIntrinsics()).ptr());
 	cudaMemcpyToArray(m_depthCameraData.d_depthArray, 0, 0, m_depthCameraData.d_depthData, sizeof(float)*m_depthCameraParams.m_imageHeight*m_depthCameraParams.m_imageWidth, cudaMemcpyDeviceToDevice);
 	cudaMemcpyToArray(m_depthCameraData.d_colorArray, 0, 0, m_depthCameraData.d_colorData, sizeof(float4)*m_depthCameraParams.m_imageHeight*m_depthCameraParams.m_imageWidth, cudaMemcpyDeviceToDevice);
 
 	// Stop Timing
-	if(GlobalAppState::get().s_timingsDetailledEnabled) { cutilSafeCall(cudaDeviceSynchronize()); m_timer.stop(); TimingLog::totalTimeRemapDepth += m_timer.getElapsedTimeMS(); TimingLog::countTimeRemapDepth++; }
+	if(GlobalAppState::get().s_timingsDetailledEnabled) { 
+		cutilSafeCall(cudaDeviceSynchronize()); 
+		m_timer.stop(); 
+		TimingLog::totalTimeRemapDepth += m_timer.getElapsedTimeMS(); 
+		TimingLog::countTimeRemapDepth++; 
+	}
 
 	return hr;
 }

@@ -153,9 +153,12 @@ void RGBDLocalDataReader::readCameraPoseFromFile(std::string filename)
 					transformation(3, 3) = 1.0;
 					transformation(3, 0) = transformation(3, 1) = transformation(3, 2) = 0;
 
-					// The groundtruth trajectories in the ICL-NUIM RGB-D data are generated with negative fy (-480.0), so
-					// we make a correction for these trajectories to ensure that the direction of the model is consistent with
-					// the scanning order.
+					// The groundtruth trajectories in the ICL-NUIM RGB-D data are generated with negative fy = -480.0, which
+					// will results in a inverse-y-coordinate upside-down model after reconstruction (even though the rendering 
+					// process is still good). To generate a normal model, we make the following corrections for the y-axis-elements 
+					// for all the transformations. 
+					// Just make sure use the positive fy = 480.0 this time.
+					// 
 					if (GlobalRGBDReaderState::getInstance().s_uRGBDataType == 1)
 					{
 						transformation(0, 1) = -transformation(0, 1);

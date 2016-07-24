@@ -61,7 +61,7 @@ s_garbageCollectionStarve	= 15;		//decrement the voxel weight every n'th frame
 
 // rendering
 s_materialShininess 	= 16.0f;
-//s_materialAmbient   	= 0.75f 0.65f 0.5f 1.0f; // Original value
+//s_materialAmbient   	= 0.75f 0.65f 0.5f 1.0f; // Original value (this will cover the RGB color during rendering)
 //s_materialAmbient   	= 0.25f 0.15f 0.1f 1.0f;
 s_materialDiffuse 		= 1.0f 0.9f 0.7f 1.0f;
 s_materialSpecular 		= 1.0f 1.0f 1.0f 1.0f;
@@ -70,7 +70,8 @@ s_lightAmbient = 1.0f 1.0f 1.0f 1.0f; // CHAO: make the scene much lighter
 //s_lightAmbient = 0.5f 0.5f 0.5f 1.0f; // CHAO: make the scene much lighter
 //s_lightDiffuse 			= 0.6f 0.52944f 0.4566f 0.6f;
 s_lightDiffuse 			= 1.0f 1.0f 1.0f 1.0f;
-s_lightSpecular 		= 0.3f 0.3f 0.3f 1.0f;
+//s_lightSpecular 		= 0.3f 0.3f 0.3f 1.0f;
+s_lightSpecular 		= 1.0f 1.0f 1.0f 1.0f;
 //s_lightDirection 		= 0.0f -1.0f 2.0f;
 s_lightDirection = 0.0f 1.0f 2.0f 1.0f;
 
