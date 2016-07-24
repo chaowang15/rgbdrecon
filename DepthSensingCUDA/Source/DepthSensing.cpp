@@ -1125,7 +1125,6 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 				g_RGBDAdapter.recordTrajectory(mat4f::zero());
 			}
 		}
-
 		if (GlobalAppState::get().s_reconstructionEnabled)
 		{
 			reconstruction_cameraposeopt();
