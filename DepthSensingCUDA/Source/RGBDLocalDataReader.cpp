@@ -135,7 +135,6 @@ void RGBDLocalDataReader::readCameraPoseFromFile(std::string filename)
 				{
 					std::cout << "CHAO WARNING: the association file does NOT contain the depth file " << str << std::endl;
 				}
-
 				//cout << "Reading pose from depth stamp " << str << "..." << endl;
 				if (GlobalRGBDReaderState::getInstance().s_bIsCameraPoseQuaternion)
 				{
