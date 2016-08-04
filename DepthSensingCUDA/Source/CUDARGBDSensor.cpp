@@ -253,7 +253,7 @@ HRESULT CUDARGBDSensor::process(ID3D11DeviceContext* context)
 	}
 
 	//TODO check whether the intensity is actually used
-	// Convert the RGB color data into grayscale intensity one
+	// Convert the RGB color data into grayscale intensity one (seems NOT used in any other places os this line can be commented)
 	convertColorToIntensityFloat(d_intensityMapFilteredFloat, m_depthCameraData.d_colorData,  m_RGBDAdapter->getWidth(), m_RGBDAdapter->getHeight());
 
 	// Compute the corresponding 3D points and its normal for each 2D pixel point in RGB image.
@@ -262,8 +262,16 @@ HRESULT CUDARGBDSensor::process(ID3D11DeviceContext* context)
 	convertDepthFloatToCameraSpaceFloat4(d_cameraSpaceFloat4, m_depthCameraData.d_depthData, M, m_RGBDAdapter->getWidth(), m_RGBDAdapter->getHeight(), m_depthCameraData); // !!! todo
 	computeNormals(d_normalMapFloat4, d_cameraSpaceFloat4, m_RGBDAdapter->getWidth(), m_RGBDAdapter->getHeight());
 
+
+	//unsigned int dataSize = m_RGBDAdapter->getWidth() * m_RGBDAdapter->getHeight();
+	//writeDataToLocalFile(m_depthCameraData.d_depthData, dataSize, 1, "depth.txt");
+	//writeDataToLocalFile(m_depthCameraData.d_colorData, dataSize, 4, "color.txt");
+	//writeDataToLocalFile(d_cameraSpaceFloat4, dataSize, 4, "output_cameraspace.txt");
+	//writeDataToLocalFile(d_normalMapFloat4, dataSize, 4, "output_normal.txt");
+
+
 	// Copy the depth and rgb data into the texture array
-	float4x4 Mintrinsics((m_RGBDAdapter->getColorIntrinsics()).ptr());
+	//float4x4 Mintrinsics((m_RGBDAdapter->getColorIntrinsics()).ptr());
 	cudaMemcpyToArray(m_depthCameraData.d_depthArray, 0, 0, m_depthCameraData.d_depthData, sizeof(float)*m_depthCameraParams.m_imageHeight*m_depthCameraParams.m_imageWidth, cudaMemcpyDeviceToDevice);
 	cudaMemcpyToArray(m_depthCameraData.d_colorArray, 0, 0, m_depthCameraData.d_colorData, sizeof(float4)*m_depthCameraParams.m_imageHeight*m_depthCameraParams.m_imageWidth, cudaMemcpyDeviceToDevice);
 

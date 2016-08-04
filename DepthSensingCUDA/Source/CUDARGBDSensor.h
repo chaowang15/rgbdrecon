@@ -84,6 +84,25 @@ class CUDARGBDSensor
 		//! computes and returns the depth map in hsv
 		float4* getAndComputeDepthHSV() const;
 
+		// Copy the data from GPU to CPU and write the data (in float) into local file
+		// Input:
+		//    dataSize: number of T type objects
+		//    elementNum: number of elements in each T type object  
+		template<class T>
+		inline void writeDataToLocalFile(T* inputData, unsigned int dataSize, unsigned int elementNum, std::string filename = "output.txt")
+		{
+			float* dataPtr = new float[dataSize*elementNum];
+			cutilSafeCall(cudaMemcpy(dataPtr, inputData, dataSize * sizeof(T), cudaMemcpyDeviceToHost));
+
+			std::ofstream writeOut(filename, std::ios::trunc);
+			for (int i = 0; i < dataSize; ++i)
+			{
+				writeOut << dataPtr[i] << std::endl;
+			}
+			writeOut.close();
+			SAFE_DELETE_ARRAY(dataPtr);
+		}
+
 	private:
 
 		DepthCameraData		m_depthCameraData;

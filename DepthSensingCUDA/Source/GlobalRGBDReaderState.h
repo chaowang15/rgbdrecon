@@ -16,6 +16,7 @@
 #define X_GLOBAL_RGBDREADER_STATE_FIELDS \
 	X(bool, s_bReadRGBData) \
 	X(bool, s_bReadCameraPoseFromFile)\
+	X(bool, s_bRenderModel)\
 	X(bool, s_bRunPoseEstimation)\
 	X(bool, s_bStoreCameraPoseIntoFile)\
 	X(bool, s_bIsCameraPoseQuaternion)\

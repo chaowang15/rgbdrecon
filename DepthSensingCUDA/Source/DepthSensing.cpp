@@ -718,7 +718,7 @@ void reconstruction()
 	mat4f transformation = mat4f::identity();
 
 	if (g_RGBDAdapter.getFrameNumber() > 1) 
-	{
+	{ 
 		g_rayCast->render(g_sceneRep->getHashData(), g_sceneRep->getHashParams(), g_CudaDepthSensor.getDepthCameraData(), g_sceneRep->getLastRigidTransform());
 
 		if (GlobalAppState::get().s_sensorIdx == 4)
@@ -859,6 +859,7 @@ void reconstruction()
 // Registrating frame
 void reconstruction_cameraposeopt()
 {
+	//std::cout << "Reconstruction ........................................" << std::endl;
 	//only if binary dump
 	if (GlobalAppState::get().s_sensorIdx == 3) 
 	{
@@ -931,26 +932,32 @@ void reconstruction_cameraposeopt()
 				{
 					//unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex;
 					//std::cout << "  Estimating camera pose for frame " << frameIdx << std::endl;
+					mat4f matTemp = g_sceneRep->getLastRigidTransform().getInverse();
+					mat4f deltatransform = matTemp * transformation;
 					switch (GlobalRGBDReaderState::getInstance().s_uCameraPoseEstimationType)
 					{
 					case 0:
+						
 						transformation = g_cameraTracking->applyCT(
 							g_CudaDepthSensor.getCameraSpacePositionsFloat4(), g_CudaDepthSensor.getNormalMapFloat4(), g_CudaDepthSensor.getColorMapFilteredFloat4(),
 							//g_rayCast->getRayCastData().d_depth4Transformed, g_CudaDepthSensor.getNormalMapNoRefinementFloat4(), g_CudaDepthSensor.getColorMapFilteredFloat4(),
 							g_rayCast->getRayCastData().d_depth4, g_rayCast->getRayCastData().d_normals, g_rayCast->getRayCastData().d_colors,
-							g_sceneRep->getLastRigidTransform(),
-							//transformation,
+							//g_sceneRep->getLastRigidTransform(),
+							transformation,
 							GlobalCameraTrackingState::getInstance().s_maxInnerIter,
 							GlobalCameraTrackingState::getInstance().s_maxOuterIter,
 							GlobalCameraTrackingState::getInstance().s_distThres,
 							GlobalCameraTrackingState::getInstance().s_normalThres,
 							100.0f,
 							3.0f,
-							mat4f::identity(),
+							//mat4f::identity(),
+							deltatransform,
 							GlobalCameraTrackingState::getInstance().s_residualEarlyOut,
 							g_RGBDAdapter.getDepthIntrinsics(),
 							g_CudaDepthSensor.getDepthCameraData(),
 							NULL);
+
+						//std::cout << transformation << std::endl;
 						break;
 
 					case 1:
@@ -1021,8 +1028,10 @@ void reconstruction_cameraposeopt()
 	// Update the frame index for the next frame
 	if (GlobalRGBDReaderState::getInstance().s_bReadRGBData)
 	{
+		//std::cout << "Test" << std::endl;
 		if (g_RGBDAdapter.isFrameIdxInRangeOfRGBData(GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex))
 		{
+			//std::cout << "Test" << std::endl;
 			GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex += GlobalRGBDReaderState::getInstance().s_uFrameInterval;
 		}
 		
@@ -1131,85 +1140,89 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 		}
 	}
 
-	if(GlobalAppState::get().s_RenderMode == 0) {
-		// Render the raw depth data for each frame
-		const mat4f renderIntrinsics = g_RGBDAdapter.getColorIntrinsics();
-		g_CustomRenderTarget.Clear(pd3dImmediateContext);
-		g_CustomRenderTarget.Bind(pd3dImmediateContext);
-		g_RGBDRenderer.RenderDepthMap(pd3dImmediateContext, g_CudaDepthSensor.getDepthMapRawFloat(), g_CudaDepthSensor.getColorMapFilteredFloat4(), g_RGBDAdapter.getWidth(), g_RGBDAdapter.getHeight(), g_RGBDAdapter.getColorIntrinsicsInv(), view, renderIntrinsics, g_CustomRenderTarget.getWidth(), g_CustomRenderTarget.getHeight(), GlobalAppState::get().s_renderingDepthDiscontinuityThresOffset, GlobalAppState::get().s_renderingDepthDiscontinuityThresLin);
-		g_CustomRenderTarget.Unbind(pd3dImmediateContext);
-		DX11PhongLighting::render(pd3dImmediateContext, g_CustomRenderTarget.GetSRV(1), g_CustomRenderTarget.GetSRV(2), g_CustomRenderTarget.GetSRV(3), GlobalAppState::get().s_useColorForRendering, g_CustomRenderTarget.getWidth(), g_CustomRenderTarget.getHeight());
-		DX11QuadDrawer::RenderQuad(pd3dImmediateContext, DX11PhongLighting::GetColorsSRV(), 1.0f);
-	}
-	else if(GlobalAppState::get().s_RenderMode == 1)
+	if (GlobalRGBDReaderState::getInstance().s_bRenderModel)
 	{
-		//default render mode
-		// Render the ray-casted data
-		const mat4f& renderIntrinsics = g_RGBDAdapter.getColorIntrinsics();
 
-		//always render, irrespective whether there is a new depth frame available
-		g_CustomRenderTarget.Clear(pd3dImmediateContext);
-		g_CustomRenderTarget.Bind(pd3dImmediateContext);
-		g_RGBDRenderer.RenderDepthMap(pd3dImmediateContext, g_rayCast->getRayCastData().d_depth, g_rayCast->getRayCastData().d_colors, g_rayCast->getRayCastParams().m_width, g_rayCast->getRayCastParams().m_height, MatrixConversion::toMlib(g_rayCast->getRayCastParams().m_intrinsicsInverse), view, renderIntrinsics, g_CustomRenderTarget.getWidth(), g_CustomRenderTarget.getHeight(), GlobalAppState::get().s_renderingDepthDiscontinuityThresOffset, GlobalAppState::get().s_renderingDepthDiscontinuityThresLin);
-		g_CustomRenderTarget.Unbind(pd3dImmediateContext);
+		if (GlobalAppState::get().s_RenderMode == 0) {
+			// Render the raw depth data for each frame
+			const mat4f renderIntrinsics = g_RGBDAdapter.getColorIntrinsics();
+			g_CustomRenderTarget.Clear(pd3dImmediateContext);
+			g_CustomRenderTarget.Bind(pd3dImmediateContext);
+			g_RGBDRenderer.RenderDepthMap(pd3dImmediateContext, g_CudaDepthSensor.getDepthMapRawFloat(), g_CudaDepthSensor.getColorMapFilteredFloat4(), g_RGBDAdapter.getWidth(), g_RGBDAdapter.getHeight(), g_RGBDAdapter.getColorIntrinsicsInv(), view, renderIntrinsics, g_CustomRenderTarget.getWidth(), g_CustomRenderTarget.getHeight(), GlobalAppState::get().s_renderingDepthDiscontinuityThresOffset, GlobalAppState::get().s_renderingDepthDiscontinuityThresLin);
+			g_CustomRenderTarget.Unbind(pd3dImmediateContext);
+			DX11PhongLighting::render(pd3dImmediateContext, g_CustomRenderTarget.GetSRV(1), g_CustomRenderTarget.GetSRV(2), g_CustomRenderTarget.GetSRV(3), GlobalAppState::get().s_useColorForRendering, g_CustomRenderTarget.getWidth(), g_CustomRenderTarget.getHeight());
+			DX11QuadDrawer::RenderQuad(pd3dImmediateContext, DX11PhongLighting::GetColorsSRV(), 1.0f);
+		}
+		else if (GlobalAppState::get().s_RenderMode == 1)
+		{
+			//default render mode
+			// Render the ray-casted data
+			const mat4f& renderIntrinsics = g_RGBDAdapter.getColorIntrinsics();
 
-		DX11PhongLighting::render(pd3dImmediateContext, g_CustomRenderTarget.GetSRV(1), g_CustomRenderTarget.GetSRV(2), g_CustomRenderTarget.GetSRV(3), GlobalAppState::get().s_useColorForRendering, g_CustomRenderTarget.getWidth(), g_CustomRenderTarget.getHeight());
-		DX11QuadDrawer::RenderQuad(pd3dImmediateContext, DX11PhongLighting::GetColorsSRV(), 1.0f);
+			//always render, irrespective whether there is a new depth frame available
+			g_CustomRenderTarget.Clear(pd3dImmediateContext);
+			g_CustomRenderTarget.Bind(pd3dImmediateContext);
+			g_RGBDRenderer.RenderDepthMap(pd3dImmediateContext, g_rayCast->getRayCastData().d_depth, g_rayCast->getRayCastData().d_colors, g_rayCast->getRayCastParams().m_width, g_rayCast->getRayCastParams().m_height, MatrixConversion::toMlib(g_rayCast->getRayCastParams().m_intrinsicsInverse), view, renderIntrinsics, g_CustomRenderTarget.getWidth(), g_CustomRenderTarget.getHeight(), GlobalAppState::get().s_renderingDepthDiscontinuityThresOffset, GlobalAppState::get().s_renderingDepthDiscontinuityThresLin);
+			g_CustomRenderTarget.Unbind(pd3dImmediateContext);
 
-	}
-	else if(GlobalAppState::get().s_RenderMode == 2) {
-		//DX11QuadDrawer::RenderQuadDynamic(DXUTGetD3D11Device(), pd3dImmediateContext, (float*)g_CudaDepthSensor.getCameraSpacePositionsFloat4(), 4, g_CudaDepthSensor.getColorWidth(), g_CudaDepthSensor.getColorHeight());
-		DX11QuadDrawer::RenderQuadDynamic(DXUTGetD3D11Device(), pd3dImmediateContext, (float*)g_CudaDepthSensor.getAndComputeDepthHSV(), 4, g_CudaDepthSensor.getColorWidth(), g_CudaDepthSensor.getColorHeight());
-	}
-	else if(GlobalAppState::get().s_RenderMode == 3) {
-		DX11QuadDrawer::RenderQuadDynamic(DXUTGetD3D11Device(), pd3dImmediateContext, (float*)g_CudaDepthSensor.getColorMapFilteredFloat4(), 4, g_CudaDepthSensor.getColorWidth(), g_CudaDepthSensor.getColorHeight());
-	}
-	else if(GlobalAppState::get().s_RenderMode == 4) {
-		DX11QuadDrawer::RenderQuadDynamic(DXUTGetD3D11Device(), pd3dImmediateContext, (float*)g_CudaDepthSensor.getNormalMapFloat4(), 4, g_CudaDepthSensor.getColorWidth(), g_CudaDepthSensor.getColorHeight());
-	}
-	else if(GlobalAppState::get().s_RenderMode == 5) {
-		//DX11QuadDrawer::RenderQuadDynamic(DXUTGetD3D11Device(), pd3dImmediateContext, (float*)g_rayCast->getRayCastData().d_colors, 4, g_rayCast->getRayCastParams().m_width, g_rayCast->getRayCastParams().m_height);
+			DX11PhongLighting::render(pd3dImmediateContext, g_CustomRenderTarget.GetSRV(1), g_CustomRenderTarget.GetSRV(2), g_CustomRenderTarget.GetSRV(3), GlobalAppState::get().s_useColorForRendering, g_CustomRenderTarget.getWidth(), g_CustomRenderTarget.getHeight());
+			DX11QuadDrawer::RenderQuad(pd3dImmediateContext, DX11PhongLighting::GetColorsSRV(), 1.0f);
 
-		//default render mode
-		const mat4f& renderIntrinsics = g_RGBDAdapter.getColorIntrinsics();
+		}
+		else if (GlobalAppState::get().s_RenderMode == 2) {
+			//DX11QuadDrawer::RenderQuadDynamic(DXUTGetD3D11Device(), pd3dImmediateContext, (float*)g_CudaDepthSensor.getCameraSpacePositionsFloat4(), 4, g_CudaDepthSensor.getColorWidth(), g_CudaDepthSensor.getColorHeight());
+			DX11QuadDrawer::RenderQuadDynamic(DXUTGetD3D11Device(), pd3dImmediateContext, (float*)g_CudaDepthSensor.getAndComputeDepthHSV(), 4, g_CudaDepthSensor.getColorWidth(), g_CudaDepthSensor.getColorHeight());
+		}
+		else if (GlobalAppState::get().s_RenderMode == 3) {
+			DX11QuadDrawer::RenderQuadDynamic(DXUTGetD3D11Device(), pd3dImmediateContext, (float*)g_CudaDepthSensor.getColorMapFilteredFloat4(), 4, g_CudaDepthSensor.getColorWidth(), g_CudaDepthSensor.getColorHeight());
+		}
+		else if (GlobalAppState::get().s_RenderMode == 4) {
+			DX11QuadDrawer::RenderQuadDynamic(DXUTGetD3D11Device(), pd3dImmediateContext, (float*)g_CudaDepthSensor.getNormalMapFloat4(), 4, g_CudaDepthSensor.getColorWidth(), g_CudaDepthSensor.getColorHeight());
+		}
+		else if (GlobalAppState::get().s_RenderMode == 5) {
+			//DX11QuadDrawer::RenderQuadDynamic(DXUTGetD3D11Device(), pd3dImmediateContext, (float*)g_rayCast->getRayCastData().d_colors, 4, g_rayCast->getRayCastParams().m_width, g_rayCast->getRayCastParams().m_height);
 
-		g_CustomRenderTarget.Clear(pd3dImmediateContext);
-		g_CustomRenderTarget.Bind(pd3dImmediateContext);
-		g_RGBDRenderer.RenderDepthMap(pd3dImmediateContext, g_rayCast->getRayCastData().d_depth, g_rayCast->getRayCastData().d_colors, g_rayCast->getRayCastParams().m_width, g_rayCast->getRayCastParams().m_height, MatrixConversion::toMlib(g_rayCast->getRayCastParams().m_intrinsicsInverse), view, renderIntrinsics, g_CustomRenderTarget.getWidth(), g_CustomRenderTarget.getHeight(), GlobalAppState::get().s_renderingDepthDiscontinuityThresOffset, GlobalAppState::get().s_renderingDepthDiscontinuityThresLin);
-		g_CustomRenderTarget.Unbind(pd3dImmediateContext);
+			//default render mode
+			const mat4f& renderIntrinsics = g_RGBDAdapter.getColorIntrinsics();
 
-		DX11PhongLighting::render(pd3dImmediateContext, g_CustomRenderTarget.GetSRV(1), g_CustomRenderTarget.GetSRV(2), g_CustomRenderTarget.GetSRV(3), !GlobalAppState::get().s_useColorForRendering, g_CustomRenderTarget.getWidth(), g_CustomRenderTarget.getHeight());
-		DX11QuadDrawer::RenderQuad(pd3dImmediateContext, DX11PhongLighting::GetColorsSRV(), 1.0f);
-	}
-	else if(GlobalAppState::get().s_RenderMode == 6) {
-		//DX11QuadDrawer::RenderQuadDynamic(DXUTGetD3D11Device(), pd3dImmediateContext, (float*)g_rayCast->getRayCastData().d_depth4DV, 4, g_rayCast->getRayCastParams().m_width, g_rayCast->getRayCastParams().m_height, 500.0f);	
-	}
-	else if(GlobalAppState::get().s_RenderMode == 8) {
-		//DX11QuadDrawer::RenderQuadDynamic(DXUTGetD3D11Device(), pd3dImmediateContext, (float*)g_CudaDepthSensor.getColorMapFilteredLastFrameFloat4(), 4, g_CudaDepthSensor.getColorWidth(), g_CudaDepthSensor.getColorHeight());
-	}
-	else if(GlobalAppState::get().s_RenderMode == 9) {
-		const mat4f& renderIntrinsics = g_RGBDAdapter.getColorIntrinsics();
+			g_CustomRenderTarget.Clear(pd3dImmediateContext);
+			g_CustomRenderTarget.Bind(pd3dImmediateContext);
+			g_RGBDRenderer.RenderDepthMap(pd3dImmediateContext, g_rayCast->getRayCastData().d_depth, g_rayCast->getRayCastData().d_colors, g_rayCast->getRayCastParams().m_width, g_rayCast->getRayCastParams().m_height, MatrixConversion::toMlib(g_rayCast->getRayCastParams().m_intrinsicsInverse), view, renderIntrinsics, g_CustomRenderTarget.getWidth(), g_CustomRenderTarget.getHeight(), GlobalAppState::get().s_renderingDepthDiscontinuityThresOffset, GlobalAppState::get().s_renderingDepthDiscontinuityThresLin);
+			g_CustomRenderTarget.Unbind(pd3dImmediateContext);
 
-		g_CustomRenderTarget.Clear(pd3dImmediateContext);
-		g_CustomRenderTarget.Bind(pd3dImmediateContext);
-		g_RGBDRenderer.RenderDepthMap(pd3dImmediateContext, g_CudaDepthSensor.getDepthMapColorSpaceFloat(), g_CudaDepthSensor.getColorMapFilteredFloat4(), g_RGBDAdapter.getWidth(), g_RGBDAdapter.getHeight(), g_RGBDAdapter.getColorIntrinsicsInv(), view, renderIntrinsics, g_CustomRenderTarget.getWidth(), g_CustomRenderTarget.getHeight(), GlobalAppState::get().s_renderingDepthDiscontinuityThresOffset, GlobalAppState::get().s_renderingDepthDiscontinuityThresLin);
-		g_CustomRenderTarget.Unbind(pd3dImmediateContext);
+			DX11PhongLighting::render(pd3dImmediateContext, g_CustomRenderTarget.GetSRV(1), g_CustomRenderTarget.GetSRV(2), g_CustomRenderTarget.GetSRV(3), !GlobalAppState::get().s_useColorForRendering, g_CustomRenderTarget.getWidth(), g_CustomRenderTarget.getHeight());
+			DX11QuadDrawer::RenderQuad(pd3dImmediateContext, DX11PhongLighting::GetColorsSRV(), 1.0f);
+		}
+		else if (GlobalAppState::get().s_RenderMode == 6) {
+			//DX11QuadDrawer::RenderQuadDynamic(DXUTGetD3D11Device(), pd3dImmediateContext, (float*)g_rayCast->getRayCastData().d_depth4DV, 4, g_rayCast->getRayCastParams().m_width, g_rayCast->getRayCastParams().m_height, 500.0f);	
+		}
+		else if (GlobalAppState::get().s_RenderMode == 8) {
+			//DX11QuadDrawer::RenderQuadDynamic(DXUTGetD3D11Device(), pd3dImmediateContext, (float*)g_CudaDepthSensor.getColorMapFilteredLastFrameFloat4(), 4, g_CudaDepthSensor.getColorWidth(), g_CudaDepthSensor.getColorHeight());
+		}
+		else if (GlobalAppState::get().s_RenderMode == 9) {
+			const mat4f& renderIntrinsics = g_RGBDAdapter.getColorIntrinsics();
 
-		DX11PhongLighting::render(pd3dImmediateContext, g_CustomRenderTarget.GetSRV(1), g_CustomRenderTarget.GetSRV(2), g_CustomRenderTarget.GetSRV(3), GlobalAppState::get().s_useColorForRendering, g_CustomRenderTarget.getWidth(), g_CustomRenderTarget.getHeight());
-		DX11QuadDrawer::RenderQuad(pd3dImmediateContext, DX11PhongLighting::GetColorsSRV(), 1.0f);
-	}
+			g_CustomRenderTarget.Clear(pd3dImmediateContext);
+			g_CustomRenderTarget.Bind(pd3dImmediateContext);
+			g_RGBDRenderer.RenderDepthMap(pd3dImmediateContext, g_CudaDepthSensor.getDepthMapColorSpaceFloat(), g_CudaDepthSensor.getColorMapFilteredFloat4(), g_RGBDAdapter.getWidth(), g_RGBDAdapter.getHeight(), g_RGBDAdapter.getColorIntrinsicsInv(), view, renderIntrinsics, g_CustomRenderTarget.getWidth(), g_CustomRenderTarget.getHeight(), GlobalAppState::get().s_renderingDepthDiscontinuityThresOffset, GlobalAppState::get().s_renderingDepthDiscontinuityThresLin);
+			g_CustomRenderTarget.Unbind(pd3dImmediateContext);
 
-	// Stop Timing
-	if (GlobalAppState::get().s_timingsDetailledEnabled) { GlobalAppState::get().WaitForGPU(); GlobalAppState::get().s_Timer.stop(); TimingLog::totalTimeRender += GlobalAppState::get().s_Timer.getElapsedTimeMS(); TimingLog::countTimeRender++; }
+			DX11PhongLighting::render(pd3dImmediateContext, g_CustomRenderTarget.GetSRV(1), g_CustomRenderTarget.GetSRV(2), g_CustomRenderTarget.GetSRV(3), GlobalAppState::get().s_useColorForRendering, g_CustomRenderTarget.getWidth(), g_CustomRenderTarget.getHeight());
+			DX11QuadDrawer::RenderQuad(pd3dImmediateContext, DX11PhongLighting::GetColorsSRV(), 1.0f);
+		}
+
+		// Stop Timing
+		if (GlobalAppState::get().s_timingsDetailledEnabled) { GlobalAppState::get().WaitForGPU(); GlobalAppState::get().s_Timer.stop(); TimingLog::totalTimeRender += GlobalAppState::get().s_Timer.getElapsedTimeMS(); TimingLog::countTimeRender++; }
 
 
-	TimingLog::printTimings();
-	if (g_renderText) RenderText();
+		TimingLog::printTimings();
+		if (g_renderText) RenderText();
 
 #ifdef OBJECT_SENSING
-	if (bGotDepth == S_OK) ObjectSensing::getInstance()->processFrame(g_sceneRep);
+		if (bGotDepth == S_OK) ObjectSensing::getInstance()->processFrame(g_sceneRep);
 #endif // OBJECT_SENSING
 
+	}
 
 	DXUT_EndPerfEvent();
 }

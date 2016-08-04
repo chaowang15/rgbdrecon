@@ -1,7 +1,8 @@
 // False to use Kinect to scan
 s_bReadRGBData = true  // if false, all the rest parameters below will NOT be used
 s_bReadCameraPoseFromFile = true
-s_bRunPoseEstimation = false
+s_bRenderModel = true
+s_bRunPoseEstimation = true // can ONLY be true if "s_bRenderModel" is true
 s_bStoreCameraPoseIntoFile = true // You still need to press 'S' to store the camera pose into file after the reconstruction process
 s_bIsCameraPoseQuaternion = true
 s_bDrawCorrespondenceBetweenImages = false
@@ -47,7 +48,7 @@ s_strDataPath = " ../../../data/room_board_320x240_flipped/"
 //s_strTrajFile = "traj_method0_groundtruth"
 //s_strTrajFile = "livingRoom2.gt.freiburg"
 //s_strTrajFile = "traj_method0"
-s_strTrajFile = "traj.txt"
+s_strTrajFile = "traj_camera2.txt"
 s_strAssociationFile = "association.txt" // CHAO: the order in the association file MUST be: DEPTH first RGB second
 
 // Camera pose estimation method type
@@ -73,7 +74,7 @@ s_uDepthScaleFactor = 5000
 s_uFrameCount = 0
 s_uMinimumFrameIndex = 0 // starting frame index (could be any value smaller than s_uMaximumFrameIndex)
 s_uMaximumFrameIndex = 1000 // maximum frame index (could be any value NO smaller than s_uMinimumFrameIndex)
-s_uFrameInterval = 1 // frame jumping interval
+s_uFrameInterval = 2 // frame jumping interval
 s_uCurrentFrameIndex = 0 // frame index you are reading currently (always starting from 0)
 
 // Parameters for RGB-D data

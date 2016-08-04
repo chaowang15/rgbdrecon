@@ -55,7 +55,6 @@ __global__ void renderKernel(HashData hashData, RayCastData rayCastData, DepthCa
 
 extern "C" void renderCS(const HashData& hashData, const RayCastData &rayCastData, const DepthCameraData &cameraData, const RayCastParams &rayCastParams) 
 {
-
 	const dim3 gridSize((rayCastParams.m_width + T_PER_BLOCK - 1)/T_PER_BLOCK, (rayCastParams.m_height + T_PER_BLOCK - 1)/T_PER_BLOCK);
 	const dim3 blockSize(T_PER_BLOCK, T_PER_BLOCK);
 
@@ -67,7 +66,7 @@ extern "C" void renderCS(const HashData& hashData, const RayCastData &rayCastDat
 
 #ifdef _DEBUG
 	cutilSafeCall(cudaDeviceSynchronize());
-	cutilCheckMsg(__FUNCTION__);
+	//cutilCheckMsg(__FUNCTION__);
 #endif
 }  
 

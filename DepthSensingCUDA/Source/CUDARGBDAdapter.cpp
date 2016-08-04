@@ -128,6 +128,8 @@ HRESULT CUDARGBDAdapter::process(ID3D11DeviceContext* context)
 	// Scale the color raw data in bytes between 0-255 to ones in floats between 0.0-1.0
 	convertColorRawToFloat4(d_colorMapFloat4, d_colorMapRaw, m_RGBDSensor->getColorWidth(), m_RGBDSensor->getColorHeight());
 	
+	//writeDataToLocalFile(d_colorMapFloat4, bufferDimColorInput, 4);
+
 	// CHAO NOTE:
 	// If the resolution from the RGBDSensor is different from the one in adapter, we re-sample the RGBDSensor data to fit the resolution in adapter.
 	// If they are the same, just copy the data. That is, the adapter resolution is the final RGBD data resolution we use for computation
@@ -146,6 +148,7 @@ HRESULT CUDARGBDAdapter::process(ID3D11DeviceContext* context)
 	// Process Depth
 	////////////////////////////////////////////////////////////////////////////////////
 	
+	// Copy depth data to GPU
 	const unsigned int bufferDimDepthInput = m_RGBDSensor->getDepthWidth()*m_RGBDSensor->getDepthHeight();
 	cutilSafeCall(cudaMemcpy(d_depthMapFloat, m_RGBDSensor->getDepthFloat(), sizeof(float)*m_RGBDSensor->getDepthWidth()* m_RGBDSensor->getDepthHeight(), cudaMemcpyHostToDevice));
 	

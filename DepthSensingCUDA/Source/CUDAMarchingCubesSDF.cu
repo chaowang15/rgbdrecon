@@ -43,7 +43,7 @@ extern "C" void extractIsoSurfaceCUDA(const HashData& hashData, const RayCastDat
 {
 	const dim3 gridSize(params.m_hashNumBuckets*params.m_hashBucketSize, 1, 1);
 	const dim3 blockSize(params.m_sdfBlockSize, params.m_sdfBlockSize, params.m_sdfBlockSize);
-
+	//std::cout << params.m_hashNumBuckets << " " << params.m_hashBucketSize << " " << params.m_sdfBlockSize << std::endl;
 	extractIsoSurfaceKernel<<<gridSize, blockSize>>>(hashData, rayCastData, data);
 
 #ifdef _DEBUG
