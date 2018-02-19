@@ -1,5 +1,5 @@
 # rgbdrecon
-This code adds an RGB-D data reader interface into the [Voxel-hashing](https://github.com/niessner/VoxelHashing) code, one of the famous Real-time RGBD Reconstruction platform. The code can take local RGB-D data as input such as [TUM RGB-D dataset](https://vision.in.tum.de/data/datasets/rgbd-dataset).
+This code adds an RGB-D data reader interface into the [Voxel-hashing](https://github.com/niessner/VoxelHashing) code, one of the famous Real-time RGBD Reconstruction platform. The code can take local RGB-D data as input such as [TUM RGB-D](https://vision.in.tum.de/data/datasets/rgbd-dataset) and [ICL-NUIM](https://www.doc.ic.ac.uk/~ahanda/VaFRIC/iclnuim.html) dataset.
 
 ## Use depth sensor
 In **zParametersDefault.txt**:
