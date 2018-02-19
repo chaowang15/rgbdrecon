@@ -3,7 +3,7 @@ This code adds an RGB-D data reader interface into the [Voxel-hashing](https://g
 
 ## Use depth sensor
 In **zParametersDefault.txt**:
-- `s_sensorIdx` : the corresponding sensor type index.
+- `s_sensorIdx` : the corresponding sensor type.
 
 In **zParametersCameraPoseOpt.txt**:
 - `s_bReadRGBData = false`.
