@@ -20,3 +20,6 @@ In **zParametersCameraPoseOpt.txt**:
 - `s_fx, s_fy, s_cx, s_cy`: camera calibration matrix parameters.
 - `s_strDataPath, s_strTrajFile, s_strAssociationFile`: the relevant RGB-D data path. Note that the code needs an association file containing corrrespondence between color and depth images. See [TUM RGB-D dataset](https://vision.in.tum.de/data/datasets/rgbd-dataset) for details. 
 - `s_depthWidth, s_depthHeight, s_colorWidth, s_colorHeight`: color and depth image resolution.
+
+**Note for ICL-NUIM dataset**
+In the ICL-NUIM dataset, the intrinsic parameter fy is negative, and the original Voxel-hashing code will generate the final mesh with inverse y-direction. To fixe this, we made some corrections on the original poses. See function `readCameraPoseFromFile()` in `RGBDLocalDataReader.cpp` for details. Note that by this, you need to set fy as **positive**.
