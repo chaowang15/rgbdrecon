@@ -126,6 +126,10 @@ class CUDARGBDAdapter
 			m_RGBDSensor->storeTrajectoryIntoFile(filename);
 		}
 
+		void saveSinglePoseIntoFile(const std::string& filename, int frame_idx){
+			m_RGBDSensor->saveSinglePoseIntoFile(filename, frame_idx);
+		}
+
 		int getNumberOfFramesReadFromRGBData() const {
 			return m_RGBDSensor->getNumberOfFramesReadFromRGBData();
 		}

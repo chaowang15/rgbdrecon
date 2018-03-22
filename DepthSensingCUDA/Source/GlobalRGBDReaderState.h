@@ -34,11 +34,10 @@
 	X(unsigned int, s_uCameraPoseEstimationType)\
 	X(unsigned int, s_uOptMethodType) \
 	X(unsigned int, s_uDepthScaleFactor) \
-	X(unsigned int, s_uFrameCount) \
-	X(unsigned int, s_uMinimumFrameIndex) \
-	X(unsigned int, s_uMaximumFrameIndex) \
+	X(unsigned int, s_uStartTimestamp) \
+	X(unsigned int, s_uEndTimestamp) \
+	X(unsigned int, s_uCurTimestamp) \
 	X(unsigned int, s_uFrameInterval) \
-	X(unsigned int, s_uCurrentFrameIndex) \
 	X(float, s_depthWidth) \
 	X(float, s_depthHeight) \
 	X(float, s_colorWidth) \

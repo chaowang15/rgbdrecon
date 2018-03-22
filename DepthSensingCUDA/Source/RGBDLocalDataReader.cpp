@@ -26,7 +26,7 @@ HRESULT RGBDLocalDataReader::createFirstConnected()
 	HRESULT hr = S_OK;
 	std::string filename = GlobalRGBDReaderState::getInstance().s_strDataPath + GlobalRGBDReaderState::getInstance().s_strAssociationFile;
 	readRGBDAssociationFile(filename);
-	GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex = GlobalRGBDReaderState::getInstance().s_uMinimumFrameIndex;
+	GlobalRGBDReaderState::getInstance().s_uCurTimestamp = GlobalRGBDReaderState::getInstance().s_uStartTimestamp;
 	std::cout << "Reading RGB-D data ... " << std::endl;
 	
 	if (GlobalRGBDReaderState::getInstance().s_bReadCameraPoseFromFile)
@@ -43,7 +43,7 @@ HRESULT RGBDLocalDataReader::processDepth()
 	HRESULT hr = S_OK;
 
 	// Read depth frame by frame
-	unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex;
+	unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurTimestamp;
 	if (isFrameIdxInRangeOfRGBData(frameIdx))
 	{
 		std::string filename = GlobalRGBDReaderState::getInstance().s_strDataPath + "depth/";
@@ -59,7 +59,7 @@ HRESULT RGBDLocalDataReader::processDepth()
 HRESULT RGBDLocalDataReader::processColor()
 {
 	HRESULT hr = S_OK;
-	unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex;
+	unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurTimestamp;
 	if (isFrameIdxInRangeOfRGBData(frameIdx))
 	{
 		std::string filename = GlobalRGBDReaderState::getInstance().s_strDataPath + "rgb/";

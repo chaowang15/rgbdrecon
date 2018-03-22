@@ -29,6 +29,7 @@ public:
 		params.m_intrinsicsInverse = MatrixConversion::toCUDA(intrinsicsInv);
 		params.m_minDepth = gas.s_sensorDepthMin;
 		params.m_maxDepth = gas.s_sensorDepthMax;
+		std::cout << gas.s_sensorDepthMax << ", " << gas.s_sensorDepthMin << std::endl;
 		params.m_rayIncrement = gas.s_SDFRayIncrementFactor * gas.s_SDFTruncation;
 		params.m_thresSampleDist = gas.s_SDFRayThresSampleDistFactor * params.m_rayIncrement;
 		params.m_thresDist = gas.s_SDFRayThresDistFactor * params.m_rayIncrement;

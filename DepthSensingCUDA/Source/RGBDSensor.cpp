@@ -322,7 +322,7 @@ void RGBDSensor::saveRecordedFramesToFile( const std::string& filename )
 
 void RGBDSensor::storeTrajectoryIntoFile(const std::string& filename)
 {
-	int frameNameIdx = GlobalRGBDReaderState::getInstance().s_uMinimumFrameIndex;
+	int frameNameIdx = GlobalRGBDReaderState::getInstance().s_uStartTimestamp;
 	int frameInterval = GlobalRGBDReaderState::getInstance().s_uFrameInterval;
 	std::ofstream writeOut(filename, std::ios::trunc); // write the data appending to the end of the file
 	for (int idx = 0; idx != m_recordedTrajectory.size(); idx++)
@@ -332,7 +332,7 @@ void RGBDSensor::storeTrajectoryIntoFile(const std::string& filename)
 			for (int j = 0; j != 3; j++)
 				mat(i, j) = m_recordedTrajectory[idx](i, j);
 		Quaternionf q(mat);
-		writeOut << m_strDepthImgName[frameNameIdx] << " " << m_recordedTrajectory[idx](0, 3) << " "
+		writeOut << m_strDepthImgName[idx] << " " << m_recordedTrajectory[idx](0, 3) << " "
 			<< m_recordedTrajectory[idx](1, 3) << " " 
 			<< m_recordedTrajectory[idx](2, 3) << " " 
 			<< q.x() << " " 
@@ -344,6 +344,18 @@ void RGBDSensor::storeTrajectoryIntoFile(const std::string& filename)
 		{
 			break;
 		}
+	}
+	writeOut.close();
+}
+
+void RGBDSensor::saveSinglePoseIntoFile(const std::string& filename, int frame_idx)
+{
+	std::ofstream writeOut(filename, std::ios::trunc);
+	for (int i = 0; i != 4; i++)
+	{
+		for (int j = 0; j != 4; j++)
+			writeOut << m_recordedTrajectory[frame_idx](i, j) << " ";
+		writeOut << std::endl;
 	}
 	writeOut.close();
 }

@@ -82,7 +82,7 @@ KinectSensor::KinectSensor()
 	//{
 	//	std::string filename = GlobalRGBDReaderState::getInstance().s_strDataPath + GlobalRGBDReaderState::getInstance().s_strAssociationFile;
 	//	readRGBDAssociationFile(filename);
-	//	GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex = GlobalRGBDReaderState::getInstance().s_uMinimumFrameIndex;
+	//	GlobalRGBDReaderState::getInstance().s_uCurTimestamp = GlobalRGBDReaderState::getInstance().s_uStartTimestamp;
 	//	std::cout << "Reading RGB-D data ... " << std::endl;
 	//}
 	//if (GlobalRGBDReaderState::getInstance().s_bReadCameraPoseFromFile)
@@ -213,7 +213,7 @@ HRESULT KinectSensor::processDepth()
 	//if (GlobalRGBDReaderState::getInstance().s_bReadRGBData)
 	//{ // Read depth data from RGB-D benchmark 
 
-	//	unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex;
+	//	unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurTimestamp;
 	//	if (isFrameIdxInRangeOfRGBData(frameIdx))
 	//	{
 	//		std::string filename = GlobalRGBDReaderState::getInstance().s_strDataPath + "depth/";
@@ -248,7 +248,7 @@ HRESULT KinectSensor::processDepth()
 
 	NUI_DEPTH_IMAGE_PIXEL * pBuffer = (NUI_DEPTH_IMAGE_PIXEL *)LockedRect.pBits;
 
-	//GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex++;
+	//GlobalRGBDReaderState::getInstance().s_uCurTimestamp++;
 
 	////#pragma omp parallel for
 	//	for (int j = 0; j < (int)getDepthWidth()*(int)getDepthHeight(); j++)	{
@@ -283,9 +283,9 @@ HRESULT KinectSensor::processDepth()
 	if (GlobalAppState::getInstance().s_bSaveRGBDImages)
 	{
 		cv::Mat depthImg2(getDepthHeight(), getDepthWidth(), CV_16UC1, m_depthPtr);
-		std::string strDepthImageName = m_strRGBDfolder + "/depth/" + std::to_string(GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex) + ".png";
+		std::string strDepthImageName = m_strRGBDfolder + "/depth/" + std::to_string(GlobalRGBDReaderState::getInstance().s_uCurTimestamp) + ".png";
 		cv::imwrite(strDepthImageName, depthImg2);
-		//GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex++;
+		//GlobalRGBDReaderState::getInstance().s_uCurTimestamp++;
 	}
 	hr = pTexture->UnlockRect(0);
 	if (FAILED(hr)) { return hr; };
@@ -313,7 +313,7 @@ HRESULT KinectSensor::processColor()
 	//if (GlobalRGBDReaderState::getInstance().s_bReadRGBData)
 	//{ // Read color data from RGB-D benchmark 
 
-	//	unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex;
+	//	unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurTimestamp;
 	//	if (isFrameIdxInRangeOfRGBData(frameIdx))
 	//	{
 	//		std::string filename = GlobalRGBDReaderState::getInstance().s_strDataPath + "rgb/";
@@ -400,9 +400,9 @@ HRESULT KinectSensor::processColor()
 	if (GlobalAppState::getInstance().s_bSaveRGBDImages)
 	{
 		cv::Mat colorImg(getDepthHeight(), getDepthWidth(), CV_8UC3, m_colorPtr);
-		std::string strColorImageName = m_strRGBDfolder + "/rgb/" + std::to_string(GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex) + ".png";
+		std::string strColorImageName = m_strRGBDfolder + "/rgb/" + std::to_string(GlobalRGBDReaderState::getInstance().s_uCurTimestamp) + ".png";
 		cv::imwrite(strColorImageName, colorImg);
-		GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex++;
+		GlobalRGBDReaderState::getInstance().s_uCurTimestamp++;
 	}
 
 	hr = imageFrame.pFrameTexture->UnlockRect(0);

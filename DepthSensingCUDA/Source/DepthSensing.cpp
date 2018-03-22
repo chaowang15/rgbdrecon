@@ -872,7 +872,7 @@ void reconstruction_cameraposeopt()
 	// Use camera poses read from local file as the initial transformation for each frame
 	if (GlobalRGBDReaderState::getInstance().s_bReadCameraPoseFromFile)
 	{
-		unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex;
+		unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurTimestamp;
 		if (g_RGBDAdapter.isFrameIdxInRangeOfRGBData(frameIdx))
 		{
 			transformation = g_RGBDAdapter.getRecordedTrajectory(frameIdx);
@@ -930,7 +930,7 @@ void reconstruction_cameraposeopt()
 				}
 				else
 				{
-					//unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex;
+					//unsigned int frameIdx = GlobalRGBDReaderState::getInstance().s_uCurTimestamp;
 					//std::cout << "  Estimating camera pose for frame " << frameIdx << std::endl;
 					mat4f matTemp = g_sceneRep->getLastRigidTransform().getInverse();
 					mat4f deltatransform = matTemp * transformation;
@@ -1020,6 +1020,17 @@ void reconstruction_cameraposeopt()
 
 	// Record each current transformation if needed
 	g_RGBDAdapter.recordTrajectory(transformation);
+	if (GlobalRGBDReaderState::getInstance().s_bStoreCameraPoseIntoFile)
+	{
+		std::string filepath = GlobalRGBDReaderState::getInstance().s_strDataPath;
+		unsigned int frame_idx = GlobalRGBDReaderState::getInstance().s_uCurTimestamp;
+		if (g_RGBDAdapter.isFrameIdxInRangeOfRGBData(frame_idx))
+		{
+			std::string filename = GlobalRGBDReaderState::getInstance().s_strDataPath + "rgb/" + std::to_string(frame_idx) + ".pose.txt";
+			std::cout << "Saving trajectory into file: " << filename << std::endl;
+			g_RGBDAdapter.saveSinglePoseIntoFile(filename, frame_idx);
+		}
+	}
 	//if (!GlobalRGBDReaderState::getInstance().s_bReadCameraPoseFromFile)
 	//{
 	//	g_RGBDAdapter.recordTrajectory(transformation);
@@ -1029,10 +1040,10 @@ void reconstruction_cameraposeopt()
 	if (GlobalRGBDReaderState::getInstance().s_bReadRGBData)
 	{
 		//std::cout << "Test" << std::endl;
-		if (g_RGBDAdapter.isFrameIdxInRangeOfRGBData(GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex))
+		if (g_RGBDAdapter.isFrameIdxInRangeOfRGBData(GlobalRGBDReaderState::getInstance().s_uCurTimestamp))
 		{
 			//std::cout << "Test" << std::endl;
-			GlobalRGBDReaderState::getInstance().s_uCurrentFrameIndex += GlobalRGBDReaderState::getInstance().s_uFrameInterval;
+			GlobalRGBDReaderState::getInstance().s_uCurTimestamp += GlobalRGBDReaderState::getInstance().s_uFrameInterval;
 		}
 		
 	}
@@ -1126,7 +1137,8 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 	t(1,1) *= -1.0f;	
 	view = t * view * t;	//t is self-inverse
 
-	if (bGotDepth == S_OK) {
+	if (bGotDepth == S_OK) 
+	{
 		if (GlobalAppState::getInstance().s_recordData) 
 		{
 			g_RGBDAdapter.recordFrame();

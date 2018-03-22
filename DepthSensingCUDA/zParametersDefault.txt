@@ -1,5 +1,5 @@
 // 0=Kinect; 1=PrimeSense; 2=KinectOne; 3=BinaryDumpReader; 4=NetworkSensor; 5=IntelSensor; 6=RealSense 
-s_sensorIdx = 1; // CHAO NOTE: this parameter MUST be 0 if you want to read RGB-D data from local files
+s_sensorIdx = 0; // CHAO NOTE: this parameter MUST be 0 if you want to read RGB-D data from local files
 
 // CHAO: true if you want to save scanned RGB-D images into file
 s_bSaveRGBDImages = false;
@@ -7,10 +7,10 @@ s_bSaveRGBDImages = false;
 s_windowWidth = 800;//640;			//render window width (default 1280)
 s_windowHeight = 600;//480;		//render window height (default 1024)
 
-s_adapterWidth = 320;				//input depth gets re-sampled to this width (decrease to improve perf.)
-s_adapterHeight = 240;				//input depth gets re-sampled to this height (decrease to improve perf.)
+s_adapterWidth = 640;				//input depth gets re-sampled to this width (decrease to improve perf.)
+s_adapterHeight = 480;				//input depth gets re-sampled to this height (decrease to improve perf.)
 
-s_sensorDepthMax = 3.5f;	//maximum sensor depth in meter
+s_sensorDepthMax = 5.0f;	//maximum sensor depth in meter
 s_sensorDepthMin = 0.5f;	//minimum sensor depth in meter
 
 // cropping options for PrimeSense & Asus Xtion Pro
@@ -21,7 +21,7 @@ s_colorCropWidth = 640;
 s_colorCropHeight = 480;
 
 // sdf and hash settings
-s_SDFVoxelSize = 0.005f;				//CHAO: voxel size in meter (IMPORTANT: reduces to improve perf., originally 0.004, and 0.005's results looks good)
+s_SDFVoxelSize = 0.004f;				//CHAO: voxel size in meter (IMPORTANT: reduces to improve perf., originally 0.004, and 0.005's results looks good)
 s_SDFMarchingCubeThreshFactor = 10.0f;	//marching cube thresh: s_SDFMarchingCubeThresh = s_SDFMarchingCubeThreshFactor*s_SDFVoxelSize
 s_SDFTruncation = 0.02f;				//truncation in meter
 s_SDFTruncationScale = 0.01f;			//truncation scale in meter per meter

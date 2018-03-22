@@ -1,17 +1,17 @@
 // False to use Kinect to scan
 s_bReadRGBData = true  // if false, all the rest parameters below will NOT be used
-s_bReadCameraPoseFromFile = true
-s_bRenderModel = true
-s_bRunPoseEstimation = true // can ONLY be true if "s_bRenderModel" is true
-s_bStoreCameraPoseIntoFile = true // You still need to press 'S' to store the camera pose into file after the reconstruction process
-s_bIsCameraPoseQuaternion = true
-s_bDrawCorrespondenceBetweenImages = false
-s_bCheckDepthValInReliableRange = false
+s_bReadCameraPoseFromFile = true // true to read local camera pose/trajectory file (will skip pose estimation)
+s_bRenderModel = true // if false, the rendering window will be hidden
+s_bRunPoseEstimation = false // can ONLY be true if "s_bRenderModel = true"
+s_bStoreCameraPoseIntoFile = true
+s_bIsCameraPoseQuaternion = true // false if using the common 16 parameters for each pose
+s_bDrawCorrespondenceBetweenImages = false // for debug
+s_bCheckDepthValInReliableRange = false //
 s_bUseWeightedOptimization = false
 
 // 0 = TUM RGB-D, 1 = ICL-NUIM, 2 = Self-Scanned with Kinect v1.0
 // NOTE: There are some corrections on the trajectories of ICL-NUIM data in the code. See the comments on the calibration matrix below for details. 
-s_uRGBDataType = 0
+s_uRGBDataType = 1
 
 // camera calibration matrix for TUM RGB-D data
 //s_fx = 525.0
@@ -22,40 +22,39 @@ s_uRGBDataType = 0
 // camera calibration matrix for the ICL-NUIM data
 // NOTE: originally fy = -480.0, which will result in a inverse-y-coordinate upside-down model after reconstruction.
 // So to generate a normal model, we made some correction on each trajectory in the code to enable the consistency. 
-// See "readCameraPoseFromFile()" in "RGBDLocalDataReader.cpp" for details. Please set the above s_uRGBDataType = 1 and 
-// use positive fy = 480.0 here.
-//s_fx = 481.20
-//s_fy = 480.0 // positive value instead of original negative one
-//s_cx = 319.50
-//s_cy = 239.50
+// See "readCameraPoseFromFile()" in "RGBDLocalDataReader.cpp" for details. Note to set `s_uRGBDataType = 1`.
+s_fx = 481.20
+s_fy = 480.0 // MUST be positive value instead of original negative one
+s_cx = 319.50
+s_cy = 239.50
 
 // camera calibration matrix for the Asus XTion depth camera
 //s_fx = 570.342163
 //s_fy = 570.342224
 //s_cx = 320
 //s_cy = 240
-s_fx = 285.1710815
-s_fy = 285.1711120
-s_cx = 160
-s_cy = 120
+//s_fx = 285.1710815
+//s_fy = 285.1711120
+//s_cx = 160
+//s_cy = 120
 
 
 // Data paths
 //s_strDataPath = "../../../data/test/"
 //s_strDataPath = " ../../../data/RGBD_benchmark/rgbd_dataset_freiburg1_floor/"
 //s_strDataPath = " ../../../data/ICL-NUIM/living_room_traj2_frei_png.tar/"
-s_strDataPath = " ../../../data/room_board_320x240_flipped/"
+s_strDataPath = "D:\\3drecon\\data\\ICL-NUIM\\living_room_traj2_frei_png.tar\\"
 //s_strTrajFile = "traj_method0_groundtruth"
-//s_strTrajFile = "livingRoom2.gt.freiburg"
+s_strTrajFile = "livingRoom2.gt.freiburg"
 //s_strTrajFile = "traj_method0"
-s_strTrajFile = "traj_camera2.txt"
-s_strAssociationFile = "association.txt" // CHAO: the order in the association file MUST be: DEPTH first RGB second
+//s_strTrajFile = "traj_camera2.txt"
+s_strAssociationFile = "association.txt" // the order in the association file MUST be: DEPTH first RGB second
 
 // Camera pose estimation method type
 // 0: original method (seems geometrical ICP only, from original code)
 // 1: RGB-D tracking method (seems do NOT work right now, also from original code)
 // 2: our optimization method 
-s_uCameraPoseEstimationType = 0 // (if false, all the rest flags will NOT be used)
+s_uCameraPoseEstimationType = 0
 
 // Camera pose optimization method type:
 //	0: qj is the average center of all frames (current frame and all previous frame). Use ICP result as initial R_i and t_i for frame i
@@ -68,25 +67,21 @@ s_uOptMethodType = 1
 // Scale factor (in meter) for the depth data. hat is, each depth value you read from the depth image (range: 0-65536) should be divided by the
 // scale factor to get its real depth value in meters. For instance, TUM and ICL-NUIM data both use scale factor 5000, and a depth value 5000
 // you read from the depth image denotes 1m in the real world.
-s_uDepthScaleFactor = 5000
+s_uDepthScaleFactor = 5000 
 
 // Parameters for data-reading process
 s_uFrameCount = 0
-s_uMinimumFrameIndex = 0 // starting frame index (could be any value smaller than s_uMaximumFrameIndex)
-s_uMaximumFrameIndex = 1000 // maximum frame index (could be any value NO smaller than s_uMinimumFrameIndex)
-s_uFrameInterval = 2 // frame jumping interval
-s_uCurrentFrameIndex = 0 // frame index you are reading currently (always starting from 0)
+s_uStartTimestamp = 1 // starting frame index (>=0 and <= s_uEndTimestamp)
+s_uEndTimestamp = 200 // ending frame index ()
+s_uCurTimestamp = 0 // frame index you are reading currently (always starting from 0)
+s_uFrameInterval = 1 // frame jumping interval
 
 // Parameters for RGB-D data
-//s_depthWidth = 640
-//s_depthHeight = 480
-//s_colorWidth = 640
-//s_colorHeight = 480
-s_depthWidth = 320
-s_depthHeight = 240
-s_colorWidth = 320
-s_colorHeight = 240
-s_maxReliableDepth = 4500
+s_depthWidth = 640
+s_depthHeight = 480
+s_colorWidth = 640
+s_colorHeight = 480
+s_maxReliableDepth = 5000
 s_minReliableDepth = 500
 
 // Parameters pose optimization

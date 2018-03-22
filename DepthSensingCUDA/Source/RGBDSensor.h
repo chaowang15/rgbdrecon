@@ -101,13 +101,15 @@ public:
 
 	void storeTrajectoryIntoFile(const std::string& filename);
 
+	void saveSinglePoseIntoFile(const std::string& filename, int frame_idx);
+
 	int getNumberOfFramesReadFromRGBData() const {
 		return (int)m_strDepthImgName.size();
 	}
 
 	// Determine if a frame index is in the reasonable range
 	inline bool isFrameIdxInRangeOfRGBData(const unsigned int& frameIdx) {
-		return (frameIdx < GlobalRGBDReaderState::getInstance().s_uMaximumFrameIndex) &&
+		return (frameIdx < GlobalRGBDReaderState::getInstance().s_uEndTimestamp) &&
 			(frameIdx < (unsigned int)m_strDepthImgName.size()) && (frameIdx >= 0);
 	}
 
