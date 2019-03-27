@@ -21,7 +21,8 @@ s_colorCropWidth = 640;
 s_colorCropHeight = 480;
 
 // sdf and hash settings
-s_SDFVoxelSize = 0.004f;				//CHAO: voxel size in meter (IMPORTANT: reduces to improve perf., originally 0.004, and 0.005's results looks good)
+//s_SDFVoxelSize = 0.004f;				// Original parameter: voxel size in meter (4mm), the larger the rougher of the mesh
+s_SDFVoxelSize = 0.008f;				// Use a large parameter to avoid GPU memory shortage (actually 0.005 looks pretty good)
 s_SDFMarchingCubeThreshFactor = 10.0f;	//marching cube thresh: s_SDFMarchingCubeThresh = s_SDFMarchingCubeThreshFactor*s_SDFVoxelSize
 s_SDFTruncation = 0.02f;				//truncation in meter
 s_SDFTruncationScale = 0.01f;			//truncation scale in meter per meter
@@ -30,8 +31,14 @@ s_SDFIntegrationWeightSample = 10;		//weight for an integrated depth value
 s_SDFIntegrationWeightMax = 255;		//maximum integration weight for a voxel
 // s_SDFBlockSize is pound defined (SDF_BLOCK_SIZE)
 // s_hashBucketSize is pound defined (HASH_BUCKET_SIZE)
-s_hashNumBuckets = 500000;				//smaller voxels require more space
-s_hashNumSDFBlocks = 262144;//100000;	//smaller voxels require more space
+
+// Original parameters (sometimes this memory is too large for some GPU that the program gives some runtime error about memory)
+//s_hashNumBuckets = 500000;				//smaller voxels require more space
+//s_hashNumSDFBlocks = 262144;//100000;	//smaller voxels require more space
+// New parameters (use smaller values to reduce GPU memory usage, but this will restrain the scale of the model)
+s_hashNumBuckets = 100000;				
+s_hashNumSDFBlocks = 100000;//100000;	
+
 s_hashMaxCollisionLinkedListSize = 7;
 
 // raycast
